@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ValidationAPI.Infra;
 
 namespace ValidationAPI;
 
@@ -20,6 +21,8 @@ public class Program
 		}
 
 		app.UseHttpsRedirection();
+		
+		app.MapEndpoints();
 
 		app.Run();
 	}
