@@ -23,7 +23,9 @@ public class Program
 
 			const string documentName = "v1";
 			builder.Services.AddOpenApi(documentName);
-
+			
+			builder.Services.AddConnectionStrings();
+			
 			var app = builder.Build();
 
 			app.UseSerilogRequestLogging();
