@@ -21,18 +21,20 @@ public class Program
 		{
 			builder.Services.AddSerilog(Log.Logger, true);
 
-			builder.Services.AddOpenApi();
+			const string documentName = "v1";
+			builder.Services.AddOpenApi(documentName);
 
 			var app = builder.Build();
 
-			if (app.Environment.IsDevelopment())
-			{
-				app.MapOpenApi();
-			}
-			
 			app.UseSerilogRequestLogging();
 			
 			app.UseHttpsRedirection();
+			
+			if (app.Environment.IsDevelopment())
+			{
+				app.MapOpenApi();
+				app.UseSwaggerUI(o => o.SwaggerEndpoint($"/openapi/{documentName}.json", "ValidationAPI"));
+			}
 			
 			app.MapEndpoints();
 
