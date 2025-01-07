@@ -27,6 +27,9 @@ public class Program
 			builder.Services.AddConnectionStrings();
 			
 			builder.Services.AddFluentMigrator();
+			
+			builder.Services.AddCookieAuthentication();
+			builder.Services.AddAuthorization();
 
 			var app = builder.Build();
 
@@ -41,6 +44,9 @@ public class Program
 				app.MapOpenApi();
 				app.UseSwaggerUI(o => o.SwaggerEndpoint($"/openapi/{documentName}.json", "ValidationAPI"));
 			}
+			
+			app.UseAuthentication();
+			app.UseAuthorization();
 			
 			app.MapEndpoints();
 

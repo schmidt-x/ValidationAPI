@@ -1,4 +1,7 @@
 ﻿using FluentMigrator.Runner;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ValidationAPI.Common.Options;
@@ -30,5 +33,27 @@ public static class IServiceCollectionExtensions
 					.ScanIn(typeof(Program).Assembly).For.Migrations();
 			})
 			.AddLogging(lb => lb.AddFluentMigratorConsole());
+	}
+	
+	public static IServiceCollection AddCookieAuthentication(this IServiceCollection services)
+	{
+		services
+			.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+			.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, opts =>
+			{
+				opts.Events.OnRedirectToLogin = rc =>
+				{
+					rc.Response.StatusCode = StatusCodes.Status401Unauthorized;
+					return Task.CompletedTask;
+				};
+				
+				opts.Events.OnRedirectToAccessDenied = rc =>
+				{
+					rc.Response.StatusCode = StatusCodes.Status403Forbidden;
+					return Task.CompletedTask;
+				};
+			});
+		
+		return services;
 	}
 }
