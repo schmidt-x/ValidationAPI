@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ValidationAPI.Features;
 using ValidationAPI.Infra;
 
 namespace ValidationAPI;
@@ -21,6 +22,8 @@ public class Program
 		{
 			builder.Services.AddSerilog(Log.Logger, true);
 
+			builder.Services.AddFeatures();
+			
 			const string documentName = "v1";
 			builder.Services.AddOpenApi(documentName);
 			
