@@ -26,8 +26,12 @@ public class Program
 			
 			builder.Services.AddConnectionStrings();
 			
+			builder.Services.AddFluentMigrator();
+
 			var app = builder.Build();
 
+			app.RunMigrations();
+			
 			app.UseSerilogRequestLogging();
 			
 			app.UseHttpsRedirection();
@@ -44,7 +48,7 @@ public class Program
 		}
 		catch (Exception ex)
 		{
-			Log.Fatal(ex, "Application terminated unexpectedly");
+			Log.Fatal(ex, "Application terminated unexpectedly.");
 		}
 		finally
 		{

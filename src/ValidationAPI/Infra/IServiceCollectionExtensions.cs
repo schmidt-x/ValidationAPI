@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentMigrator.Runner;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ValidationAPI.Options;
 
 namespace ValidationAPI.Infra;
@@ -15,5 +17,18 @@ public static class IServiceCollectionExtensions
 			.ValidateOnStart();
 		
 		return services;
+	}
+	
+	public static IServiceCollection AddFluentMigrator(this IServiceCollection services)
+	{
+		return services
+			.AddFluentMigratorCore()
+			.ConfigureRunner(rb =>
+			{
+				rb.AddPostgres()
+					.WithGlobalConnectionString(sp => sp.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value.Postgres)
+					.ScanIn(typeof(Program).Assembly).For.Migrations();
+			})
+			.AddLogging(lb => lb.AddFluentMigratorConsole());
 	}
 }
