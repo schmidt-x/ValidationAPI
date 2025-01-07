@@ -1,4 +1,6 @@
 using System;
+using System.Reflection;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +25,8 @@ public class Program
 			builder.Services.AddSerilog(Log.Logger, true);
 
 			builder.Services.AddFeatures();
+			
+			builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 			
 			const string documentName = "v1";
 			builder.Services.AddOpenApi(documentName);
