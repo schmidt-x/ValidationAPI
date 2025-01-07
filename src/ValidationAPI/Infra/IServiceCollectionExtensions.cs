@@ -1,7 +1,7 @@
 ﻿using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using ValidationAPI.Options;
+using ValidationAPI.Common.Options;
 
 namespace ValidationAPI.Infra;
 

@@ -1,4 +1,4 @@
-﻿namespace ValidationAPI.Options;
+﻿namespace ValidationAPI.Common.Options;
 
 public class ConnectionStringsOptions
 {
