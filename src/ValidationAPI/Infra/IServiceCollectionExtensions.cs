@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using ValidationAPI.Common.Options;
 
 namespace ValidationAPI.Infra;
@@ -55,5 +56,11 @@ public static class IServiceCollectionExtensions
 			});
 		
 		return services;
+	}
+	
+	public static IServiceCollection AddNpgsql(this IServiceCollection services)
+	{
+		return services.AddSingleton<NpgsqlDataSource>(sp =>
+			 NpgsqlDataSource.Create(sp.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value.Postgres));
 	}
 }

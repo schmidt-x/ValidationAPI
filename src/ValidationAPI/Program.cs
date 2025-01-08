@@ -24,6 +24,8 @@ public class Program
 		{
 			builder.Services.AddSerilog(Log.Logger, true);
 
+			builder.Services.AddNpgsql();
+			
 			builder.Services.AddFeatures();
 			
 			builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
