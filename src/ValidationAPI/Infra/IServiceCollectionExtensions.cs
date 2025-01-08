@@ -23,6 +23,12 @@ public static class IServiceCollectionExtensions
 		return services;
 	}
 	
+	public static IServiceCollection AddAuthOptions(this IServiceCollection services)
+	{
+		services.AddOptions<AuthOptions>().BindConfiguration(AuthOptions.Section);
+		return services;
+	}
+	
 	public static IServiceCollection AddFluentMigrator(this IServiceCollection services)
 	{
 		return services

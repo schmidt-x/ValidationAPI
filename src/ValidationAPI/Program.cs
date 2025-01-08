@@ -39,6 +39,7 @@ public class Program
 			builder.Services.AddOpenApi(documentName);
 			
 			builder.Services.AddConnectionStrings();
+			builder.Services.AddAuthOptions();
 			
 			builder.Services.AddFluentMigrator();
 			
