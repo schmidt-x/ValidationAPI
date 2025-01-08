@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
+using ValidationAPI.Data.Repositories;
 
 namespace ValidationAPI.Data;
 
@@ -15,6 +16,9 @@ public sealed class RepositoryContext : IRepositoryContext, IDisposable
 	}
 	
 	private NpgsqlTransaction? _transaction;
+	
+	private IUserRepository? _users;
+	public IUserRepository Users => _users ??= new UserRepository(_connection, _transaction);
 	
 	
 	public async Task BeginTransactionAsync(CancellationToken ct)
@@ -70,6 +74,6 @@ public sealed class RepositoryContext : IRepositoryContext, IDisposable
 	
 	private void ResetRepositories()
 	{
-		
+		_users = null;
 	}
 }

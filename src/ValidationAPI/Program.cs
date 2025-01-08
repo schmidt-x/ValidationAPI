@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ValidationAPI.Data;
 using ValidationAPI.Features;
 using ValidationAPI.Infra;
 
@@ -27,6 +28,8 @@ public class Program
 
 			builder.Services.AddNpgsql();
 			DefaultTypeMap.MatchNamesWithUnderscores = true;
+			
+			builder.Services.AddScoped<IRepositoryContext, RepositoryContext>();
 			
 			builder.Services.AddFeatures();
 			
