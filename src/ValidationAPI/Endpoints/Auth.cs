@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Features.Auth.Commands.SignUp;
+using ValidationAPI.Features.Auth.Commands.SigIn;
 using ValidationAPI.Infra;
 using ValidationAPI.Responses;
-using ValidationAPI.Extensions;
 
 namespace ValidationAPI.Endpoints;
 
@@ -26,6 +26,10 @@ public class Auth : EndpointGroupBase
 			.Produces(StatusCodes.Status201Created)
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
 		
+		group.MapPost("sign-in", SignIn)
+			.WithSummary("Logs in a user")
+			.Produces(StatusCodes.Status200OK)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
 	}
 	
 	public static async Task<IResult> SignUp(
@@ -40,10 +44,28 @@ public class Auth : EndpointGroupBase
 		
 		if (result.IsError(out var ex))
 		{
-			return Results.UnprocessableEntity(ex is ValidationException vEx ? vEx.ToFailResponse() : throw ex);
+			return Results.UnprocessableEntity(ex is ValidationException vEx ? FailResponse.From(vEx) : throw ex);
 		}
 		
 		response.StatusCode = StatusCodes.Status201Created;
+		return Results.SignIn(result.Value, new AuthenticationProperties { IsPersistent = true });
+	}
+	
+	public static async Task<IResult> SignIn(
+		[FromForm] string login,
+		[FromForm] string password,
+		SignInCommandHandler handler,
+		HttpResponse response,
+		CancellationToken ct)
+	{
+		var result = await handler.Handle(new SignInCommand(login, password), ct);
+		
+		if (result.IsError(out var ex))
+		{
+			return Results.UnprocessableEntity(ex is AuthException authEx ? FailResponse.From(authEx) : throw ex);
+		}
+		
+		response.StatusCode = StatusCodes.Status200OK;
 		return Results.SignIn(result.Value, new AuthenticationProperties { IsPersistent = true });
 	}
 }
