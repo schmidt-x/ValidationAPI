@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Dapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ public class Program
 			builder.Services.AddSerilog(Log.Logger, true);
 
 			builder.Services.AddNpgsql();
+			DefaultTypeMap.MatchNamesWithUnderscores = true;
 			
 			builder.Services.AddFeatures();
 			
