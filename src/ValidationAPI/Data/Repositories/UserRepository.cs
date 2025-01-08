@@ -48,4 +48,14 @@ public class UserRepository : RepositoryBase, IUserRepository
 		
 		return await Connection.ExecuteScalarAsync<bool>(command);
 	}
+	
+	public async Task<User?> GetByEmailIfExistsAsync(string emailAddress, CancellationToken ct)
+	{
+		const string sql = "SELECT * FROM users WHERE normalized_email = @EmailAddress";
+		
+		var command = new CommandDefinition(
+			sql, new { emailAddress = emailAddress.ToUpperInvariant()}, Transaction, cancellationToken: ct);
+		
+		return await Connection.QuerySingleOrDefaultAsync<User>(command);
+	}
 }
