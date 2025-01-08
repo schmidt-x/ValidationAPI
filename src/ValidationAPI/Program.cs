@@ -35,6 +35,8 @@ public class Program
 			
 			builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 			
+			builder.Services.AddHttpContextAccessor();
+			
 			const string documentName = "v1";
 			builder.Services.AddOpenApi(documentName);
 			

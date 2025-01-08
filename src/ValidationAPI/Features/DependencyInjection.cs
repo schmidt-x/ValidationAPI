@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using ValidationAPI.Common.Services;
 using ValidationAPI.Features.Auth;
 using ValidationAPI.Features.Infra;
 
@@ -11,6 +12,9 @@ public static class DependencyInjection
 		services.AddRequestHandlersFromExecutingAssembly();
 		
 		services.AddAuthServices();
+		
+		// common services
+		services.AddSingleton<IUser, CurrentUser>();
 		
 		return services;
 	}
