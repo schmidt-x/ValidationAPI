@@ -84,7 +84,7 @@ public class SignUpCommandHandler : RequestHandlerBase
 			throw;
 		}
 		
-		_logger.Information("[{UserId}] [{Username}] signed up.", user.Id, user.Username);
+		_logger.Information("[{UserId}] [{Action}] user signed up.", user.Id, "SignUp");
 		
 		Claim[] claims = [ new(ClaimTypes.NameIdentifier, user.Id.ToString())];
 		var identity = new ClaimsIdentity(claims, _schemeProvider.Scheme);

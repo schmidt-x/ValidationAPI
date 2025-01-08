@@ -50,7 +50,7 @@ public class SignInCommandHandler : RequestHandlerBase
 			return new AuthException();
 		}
 		
-		_logger.Information("[{UserId}] [{Username}] signed in.", user.Id, user.Username);
+		_logger.Information("[{UserId}] [{Action}] user signed in.", user.Id, "SignIn");
 		
 		Claim[] claims = [ new(ClaimTypes.NameIdentifier, user.Id.ToString())];
 		var identity = new ClaimsIdentity(claims, _schemeProvider.Scheme);
