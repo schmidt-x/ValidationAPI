@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ValidationAPI.Common.Exceptions;
+using ValidationAPI.Common.Services;
 using ValidationAPI.Features.Auth.Commands.SignUp;
 using ValidationAPI.Features.Auth.Commands.SigIn;
 using ValidationAPI.Infra;
@@ -28,8 +29,14 @@ public class Auth : EndpointGroupBase
 		
 		group.MapPost("sign-in", SignIn)
 			.WithSummary("Logs in a user")
-			.Produces(StatusCodes.Status200OK)
+			.Produces(StatusCodes.Status204NoContent)
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
+		
+		group.MapPost("sign-out", SignOut)
+			.WithSummary("Logs out a user")
+			.Produces(StatusCodes.Status204NoContent)
+			.Produces(StatusCodes.Status401Unauthorized)
+			.RequireAuthorization();
 	}
 	
 	public static async Task<IResult> SignUp(
@@ -65,7 +72,19 @@ public class Auth : EndpointGroupBase
 			return Results.UnprocessableEntity(ex is AuthException authEx ? FailResponse.From(authEx) : throw ex);
 		}
 		
-		response.StatusCode = StatusCodes.Status200OK;
+		response.StatusCode = StatusCodes.Status204NoContent;
 		return Results.SignIn(result.Value, new AuthenticationProperties { IsPersistent = true });
+	}
+	
+	public static IResult SignOut(
+		HttpResponse response,
+		Serilog.ILogger logger,
+		IUser user)
+	{
+		// TODO: move into handler
+		logger.Information("[{UserId}] [{Action}] user signed out.", user.Id(), "SignOut");
+		
+		response.StatusCode = StatusCodes.Status204NoContent;
+		return Results.SignOut();
 	}
 }
