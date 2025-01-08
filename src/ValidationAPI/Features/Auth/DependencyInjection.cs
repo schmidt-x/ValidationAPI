@@ -8,6 +8,7 @@ public static class DependencyInjection
 	public static IServiceCollection AddAuthServices(this IServiceCollection services)
 	{
 		services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+		services.AddSingleton<IAuthSchemeProvider, CookieAuthSchemeProvider>();
 		
 		return services;
 	}
