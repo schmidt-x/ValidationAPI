@@ -3,7 +3,7 @@
 namespace ValidationAPI.Data.Migrations;
 
 [Migration(20250107_01)]
-public class InitialMigration_2025010701 : Migration
+public class InitialMigration : Migration
 {
 	public override void Up()
 	{
