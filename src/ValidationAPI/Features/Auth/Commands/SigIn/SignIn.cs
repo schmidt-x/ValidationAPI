@@ -25,7 +25,8 @@ public class SignInCommandHandler : RequestHandlerBase
 		IValidator<SignInCommand> validator,
 		IRepositoryContext db,
 		IPasswordHasher passwordHasher,
-		IAuthSchemeProvider schemeProvider, ILogger logger)
+		IAuthSchemeProvider schemeProvider,
+		ILogger logger)
 	{
 		_validator = validator;
 		_db = db;
@@ -49,10 +50,10 @@ public class SignInCommandHandler : RequestHandlerBase
 			return new AuthException();
 		}
 		
-		_logger.Information("[{UserId}] [{Action}] user signed in.", user.Id, "SignIn");
-		
 		Claim[] claims = [ new(ClaimTypes.NameIdentifier, user.Id.ToString())];
 		var identity = new ClaimsIdentity(claims, _schemeProvider.Scheme);
+		
+		_logger.Information("[{UserId}] [{Action}] User signed in.", user.Id, "SignIn");
 		
 		return new ClaimsPrincipal(identity);
 	}

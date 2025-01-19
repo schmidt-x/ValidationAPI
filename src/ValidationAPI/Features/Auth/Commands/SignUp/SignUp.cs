@@ -80,14 +80,14 @@ public class SignUpCommandHandler : RequestHandlerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.Error("Failed to create a user: {ErrorMessage}", ex.Message);
+			_logger.Error("[{Action}] Failed to create a user: {ErrorMessage}", "SignUp", ex.Message);
 			throw;
 		}
 		
-		_logger.Information("[{UserId}] [{Action}] user signed up.", user.Id, "SignUp");
-		
 		Claim[] claims = [ new(ClaimTypes.NameIdentifier, user.Id.ToString())];
 		var identity = new ClaimsIdentity(claims, _schemeProvider.Scheme);
+		
+		_logger.Information("[{UserId}] [{Action}] User signed up.", user.Id, "SignUp");
 		
 		return new ClaimsPrincipal(identity);
 	}

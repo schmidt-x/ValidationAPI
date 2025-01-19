@@ -1,10 +1,11 @@
-﻿using System.Threading;
+﻿using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ValidationAPI.Common.Exceptions;
+using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Services;
 using ValidationAPI.Features.Auth.Commands.SignUp;
 using ValidationAPI.Features.Auth.Commands.SigIn;
@@ -18,7 +19,7 @@ public class Auth : EndpointGroupBase
 	public override void Map(WebApplication app)
 	{
 		var group = app
-			.MapGroup("/api/auth")
+			.MapGroup("api/auth")
 			.WithTags("Auth")
 			.DisableAntiforgery(); // TODO: remove
 		
@@ -47,11 +48,11 @@ public class Auth : EndpointGroupBase
 		HttpResponse response,
 		CancellationToken ct)
 	{
-		var result = await handler.Handle(new SignUpCommand(email, username, password), ct);
+		Result<ClaimsPrincipal> result = await handler.Handle(new SignUpCommand(email, username, password), ct);
 		
 		if (result.IsError(out var ex))
 		{
-			return Results.UnprocessableEntity(ex is ValidationException vEx ? FailResponse.From(vEx) : throw ex);
+			return Results.UnprocessableEntity(FailResponse.From(ex));
 		}
 		
 		response.StatusCode = StatusCodes.Status201Created;
@@ -65,11 +66,11 @@ public class Auth : EndpointGroupBase
 		HttpResponse response,
 		CancellationToken ct)
 	{
-		var result = await handler.Handle(new SignInCommand(login, password), ct);
+		Result<ClaimsPrincipal> result = await handler.Handle(new SignInCommand(login, password), ct);
 		
 		if (result.IsError(out var ex))
 		{
-			return Results.UnprocessableEntity(ex is AuthException authEx ? FailResponse.From(authEx) : throw ex);
+			return Results.UnprocessableEntity(FailResponse.From(ex));
 		}
 		
 		response.StatusCode = StatusCodes.Status204NoContent;
@@ -82,7 +83,7 @@ public class Auth : EndpointGroupBase
 		IUser user)
 	{
 		// TODO: move into handler
-		logger.Information("[{UserId}] [{Action}] user signed out.", user.Id(), "SignOut");
+		logger.Information("[{UserId}] [{Action}] User signed out.", user.Id(), "SignOut");
 		
 		response.StatusCode = StatusCodes.Status204NoContent;
 		return Results.SignOut();
