@@ -9,16 +9,24 @@ namespace ValidationAPI.Data;
 public sealed class RepositoryContext : IRepositoryContext, IDisposable
 {
 	private readonly NpgsqlConnection _connection;
+	private NpgsqlTransaction? _transaction;
 	
 	public RepositoryContext(NpgsqlDataSource source)
 	{
 		_connection = source.CreateConnection();
 	}
 	
-	private NpgsqlTransaction? _transaction;
-	
 	private IUserRepository? _users;
 	public IUserRepository Users => _users ??= new UserRepository(_connection, _transaction);
+	
+	private IEndpointRepository? _endpoints;
+	public IEndpointRepository Endpoints => _endpoints ??= new EndpointRepository(_connection, _transaction);
+	
+	private IPropertyRepository? _properties;
+	public IPropertyRepository Properties => _properties ??= new PropertyRepository(_connection, _transaction);
+	
+	private IRuleRepository? _rules;
+	public IRuleRepository Rules => _rules ??= new RuleRepository(_connection, _transaction);
 	
 	
 	public async Task BeginTransactionAsync(CancellationToken ct)
@@ -74,6 +82,6 @@ public sealed class RepositoryContext : IRepositoryContext, IDisposable
 	
 	private void ResetRepositories()
 	{
-		_users = null;
+		_users = null; _endpoints = null; _properties = null; _rules = null;
 	}
 }
