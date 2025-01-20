@@ -40,7 +40,7 @@ public class SignUpCommandValidator : AbstractValidator<SignUpCommand>
 		RuleFor(x => x.Username)
 			.Matches(@"^[a-zA-Z\d_.]+$", RegexOptions.Compiled)
 			.WithErrorCode(INVALID_CHAR_IN_VALUE)
-			.WithMessage("Username can contain only lowercase (a-z), uppercase (A-Z), digits (0-9), underscores, or periods.");
+			.WithMessage("Username can only contain lowercase (a-z), uppercase (A-Z), digits (0-9), underscores, or periods.");
 		
 		RuleFor(x => x.Password)
 			.NotEmpty()
