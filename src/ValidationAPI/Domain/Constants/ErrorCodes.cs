@@ -4,8 +4,9 @@
 
 public static class ErrorCodes
 {
-	public const string VALIDATION_FAILURE = nameof(VALIDATION_FAILURE);
-	public const string AUTH_FAILURE       = nameof(AUTH_FAILURE);
+	public const string VALIDATION_FAILURE        = nameof(VALIDATION_FAILURE);
+	public const string AUTH_FAILURE              = nameof(AUTH_FAILURE);
+	public const string INVALID_OPERATION_FAILURE = nameof(INVALID_OPERATION_FAILURE);
 	
 	public const string EMPTY_VALUE             = nameof(EMPTY_VALUE);
 	public const string DUPLICATE_VALUE         = nameof(DUPLICATE_VALUE);
@@ -17,4 +18,9 @@ public static class ErrorCodes
 	public const string VALUE_MISSING_LOWERCASE = nameof(VALUE_MISSING_LOWERCASE);
 	public const string VALUE_MISSING_UPPERCASE = nameof(VALUE_MISSING_UPPERCASE);
 	public const string VALUE_MISSING_SYMBOL    = nameof(VALUE_MISSING_SYMBOL);
+	
+	public const string INVALID_RULE_VALUE  = nameof(INVALID_RULE_VALUE);
+	public const string INVALID_RULE_TYPE   = nameof(INVALID_RULE_TYPE);
+	public const string EMPTY_RULE_NAME     = nameof(EMPTY_RULE_NAME);
+	public const string DUPLICATE_RULE_NAME = nameof(DUPLICATE_RULE_NAME);
 }
