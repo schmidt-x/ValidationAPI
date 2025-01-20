@@ -1,4 +1,5 @@
-﻿using FluentMigrator.Runner;
+﻿using System.Text.Json.Serialization;
+using FluentMigrator.Runner;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using ValidationAPI.Common.Options;
+using ValidationAPI.Domain.Enums;
 
 namespace ValidationAPI.Infra;
 
@@ -68,5 +70,20 @@ public static class IServiceCollectionExtensions
 	{
 		return services.AddSingleton<NpgsqlDataSource>(sp =>
 			 NpgsqlDataSource.Create(sp.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value.Postgres));
+	}
+	
+	public static IServiceCollection ConfigureJsonOptions(this IServiceCollection services)
+	{
+		return services
+			.ConfigureHttpJsonOptions(opts =>
+			{
+				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
+				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+			})
+			.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(opts =>
+			{
+				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
+				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+			});
 	}
 }

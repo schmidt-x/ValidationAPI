@@ -48,6 +48,8 @@ public class Program
 			builder.Services.AddCookieAuthentication();
 			builder.Services.AddAuthorization();
 
+			builder.Services.ConfigureJsonOptions();
+			
 			var app = builder.Build();
 
 			app.RunMigrations();
