@@ -9,4 +9,5 @@ public interface IEndpointRepository
 {
 	Task<bool> ExistsAsync(string name, Guid userId, CancellationToken ct);
 	Task<int> CreateAsync(Endpoint endpoint, CancellationToken ct);
+	Task<int?> GetIdIfExistsAsync(string endpoint, Guid userId, CancellationToken ct);
 }

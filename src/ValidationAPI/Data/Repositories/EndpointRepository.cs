@@ -39,4 +39,14 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		return await Connection.ExecuteScalarAsync<int>(command);
 	}
+
+	public async Task<int?> GetIdIfExistsAsync(string endpoint, Guid userId, CancellationToken ct)
+	{
+		const string query = "SELECT id FROM endpoints WHERE (normalized_name, user_id) = (@NormalizedName, @UserId);";
+		
+		var command = new CommandDefinition(
+			query, new { NormalizedName = endpoint.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
+		
+		return await Connection.QuerySingleOrDefaultAsync<int?>(command);
+	}
 }

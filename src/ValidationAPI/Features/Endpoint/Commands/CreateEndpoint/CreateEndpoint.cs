@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -99,6 +98,7 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			{
 				property.EndpointId = endpointId;
 				var propertyId = await _db.Properties.CreateAsync(property, ct);
+				if (property.Rules.Count == 0) continue;
 				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId, ct);
 			}
 			

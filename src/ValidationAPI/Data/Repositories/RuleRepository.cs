@@ -40,4 +40,14 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		var command = new CommandDefinition(sql, anonymousRules, Transaction, cancellationToken: ct);
 		await Connection.ExecuteAsync(command);
 	}
+
+	public async Task<ICollection<Rule>> GetAllByPropertyIdAsync(IEnumerable<int> propertyIds, CancellationToken ct)
+	{
+		const string query = "SELECT * FROM rules WHERE property_id = ANY (@PropertyIds)";
+		
+		var command = new CommandDefinition(
+			query, new { PropertyIds = propertyIds.ToArray() }, Transaction, cancellationToken: ct);
+		
+		return (ICollection<Rule>)await Connection.QueryAsync<Rule>(command);
+	}
 }

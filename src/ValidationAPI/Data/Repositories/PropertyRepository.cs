@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -26,5 +27,14 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		
 		var command = new CommandDefinition(sql, dParams, Transaction, cancellationToken: ct);
 		return await Connection.ExecuteScalarAsync<int>(command);
+	}
+
+	public async Task<ICollection<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "select * from properties where endpoint_id = @EndpointId;";
+		
+		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		
+		return (ICollection<Property>)await Connection.QueryAsync<Property>(command);
 	}
 }

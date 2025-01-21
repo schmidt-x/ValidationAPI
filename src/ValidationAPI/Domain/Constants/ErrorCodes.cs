@@ -19,8 +19,10 @@ public static class ErrorCodes
 	public const string VALUE_MISSING_UPPERCASE = nameof(VALUE_MISSING_UPPERCASE);
 	public const string VALUE_MISSING_SYMBOL    = nameof(VALUE_MISSING_SYMBOL);
 	
-	public const string INVALID_RULE_VALUE  = nameof(INVALID_RULE_VALUE);
-	public const string INVALID_RULE_TYPE   = nameof(INVALID_RULE_TYPE);
-	public const string EMPTY_RULE_NAME     = nameof(EMPTY_RULE_NAME);
-	public const string DUPLICATE_RULE_NAME = nameof(DUPLICATE_RULE_NAME);
+	public const string INVALID_RULE_VALUE    = nameof(INVALID_RULE_VALUE);
+	public const string INVALID_RULE_TYPE     = nameof(INVALID_RULE_TYPE);
+	public const string EMPTY_RULE_NAME       = nameof(EMPTY_RULE_NAME);
+	public const string DUPLICATE_RULE_NAME   = nameof(DUPLICATE_RULE_NAME);
+	public const string PROPERTY_NOT_PRESENT  = nameof(PROPERTY_NOT_PRESENT);
+	public const string INVALID_PROPERTY_TYPE = nameof(INVALID_PROPERTY_TYPE);
 }

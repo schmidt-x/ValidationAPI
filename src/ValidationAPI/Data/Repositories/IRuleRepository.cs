@@ -8,4 +8,5 @@ namespace ValidationAPI.Data.Repositories;
 public interface IRuleRepository
 {
 	Task CreateAsync(List<Rule> rules, int propertyId, int endpointId, CancellationToken ct);
+	Task<ICollection<Rule>> GetAllByPropertyIdAsync(IEnumerable<int> propertyIds, CancellationToken ct);
 }
