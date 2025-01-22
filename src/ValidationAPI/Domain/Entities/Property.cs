@@ -11,5 +11,5 @@ public class Property
 	public bool IsOptional { get; init; }
 	public int EndpointId { get; set; }
 	
-	public List<Rule> Rules { get; init; } = null!;
+	public List<Rule> Rules { get; set; } = null!;
 }

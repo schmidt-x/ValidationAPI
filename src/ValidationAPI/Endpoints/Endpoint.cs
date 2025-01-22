@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
+using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
+using ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
 using ValidationAPI.Infra;
 using ValidationAPI.Responses;
@@ -34,6 +36,11 @@ public class Endpoint : EndpointGroupBase
 			.WithSummary("Validates a request")
 			.Produces<ValidationResult>()
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapGet("{endpoint}", Get)
+			.WithSummary("Returns an endpoint (optionally includes Properties and Rules)")
+			.Produces<EndpointResponse>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
 		
@@ -69,4 +76,17 @@ public class Endpoint : EndpointGroupBase
 				? Results.NotFound()
 				: Results.UnprocessableEntity(FailResponse.From(ex)));
 	}
+	
+	public static async Task<IResult> Get(
+		[FromRoute] string endpoint,
+		GetEndpointQueryHandler handler,
+		CancellationToken ct,
+		[FromQuery] bool includePropertiesAndRules = true)
+	{
+		var query = new GetEndpointQuery(endpoint, includePropertiesAndRules);
+		Result<EndpointResponse> result = await handler.Handle(query, ct);
+		
+		return result.Match<IResult>(Results.Ok, _ => Results.NotFound());
+	}
+	
 }
