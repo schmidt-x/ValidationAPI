@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using ValidationAPI.Data;
+using ValidationAPI.Data.TypeHandlers;
 using ValidationAPI.Features;
 using ValidationAPI.Infra;
 
@@ -30,6 +31,7 @@ public class Program
 			DefaultTypeMap.MatchNamesWithUnderscores = true;
 			
 			builder.Services.AddScoped<IRepositoryContext, RepositoryContext>();
+			SqlMapper.AddTypeHandler(new DateTimeOffsetHandler());
 			
 			builder.Services.AddFeatures();
 			
