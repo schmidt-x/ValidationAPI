@@ -11,6 +11,7 @@ using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
 using ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
+using ValidationAPI.Features.Endpoint.Commands.DeleteEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
 using ValidationAPI.Infra;
@@ -52,7 +53,10 @@ public class Endpoint : EndpointGroupBase
 			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
 		
-		
+		g.MapDelete("{endpoint}", Delete)
+			.WithSummary("Deletes an endpoint (including Properties and Rules)")
+			.Produces(StatusCodes.Status204NoContent)
+			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
 	public static async Task<IResult> Create(
@@ -114,5 +118,15 @@ public class Endpoint : EndpointGroupBase
 		};
 	}
 	
-	
+	public static async Task<IResult> Delete(
+		[FromRoute] string endpoint,
+		DeleteEndpointCommandHandler handler,
+		CancellationToken ct)
+	{
+		var ex = await handler.Handle(new DeleteEndpointCommand(endpoint), ct);
+		
+		return ex is null
+			? Results.NoContent()
+			: Results.NotFound();
+	}
 }

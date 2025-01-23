@@ -132,4 +132,12 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		await Connection.ExecuteAsync(command);
 	}
+	
+	public async Task DeleteAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "DELETE FROM endpoints WHERE id = @EndpointId;";
+		
+		await Connection.ExecuteAsync(
+			new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct));
+	}
 }

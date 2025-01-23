@@ -16,4 +16,5 @@ public interface IEndpointRepository
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct);
 	
 	Task RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
+	Task DeleteAsync(int endpointId, CancellationToken ct);
 }

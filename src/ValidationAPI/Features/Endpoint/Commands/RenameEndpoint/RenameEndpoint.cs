@@ -22,10 +22,7 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 	private readonly ILogger _logger;
 	
 	public RenameEndpointCommandHandler(
-		IValidator<RenameEndpointCommand> validator,
-		IUser user,
-		IRepositoryContext db,
-		ILogger logger)
+		IValidator<RenameEndpointCommand> validator, IUser user, IRepositoryContext db, ILogger logger)
 	{
 		_validator = validator;
 		_user = user;
