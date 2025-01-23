@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
+using ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
 using ValidationAPI.Infra;
@@ -42,6 +44,13 @@ public class Endpoint : EndpointGroupBase
 			.WithSummary("Returns an endpoint (optionally includes Properties and Rules)")
 			.Produces<EndpointResponse>()
 			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapPut("{endpoint}", Rename)
+			.WithSummary("Renames an endpoint")
+			.Produces(StatusCodes.Status204NoContent)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized)
+			.DisableAntiforgery(); // TODO: remove
 		
 		
 	}
@@ -88,5 +97,22 @@ public class Endpoint : EndpointGroupBase
 		
 		return result.Match<IResult>(Results.Ok, _ => Results.NotFound());
 	}
+	
+	public static async Task<IResult> Rename(
+		[FromRoute] string endpoint,
+		[FromForm] string newName,
+		RenameEndpointCommandHandler handler,
+		CancellationToken ct)
+	{
+		Exception? ex = await handler.Handle(new RenameEndpointCommand(endpoint, newName), ct);
+		
+		return ex switch
+		{
+			null => Results.NoContent(),
+			NotFoundException => Results.NotFound(),
+			_ => Results.UnprocessableEntity(FailResponse.From(ex))
+		};
+	}
+	
 	
 }

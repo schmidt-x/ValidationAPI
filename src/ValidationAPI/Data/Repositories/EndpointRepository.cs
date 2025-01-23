@@ -19,17 +19,14 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 	
 	public async Task<bool> ExistsAsync(string name, Guid userId, CancellationToken ct)
 	{
-		const string sql = """
-			SELECT EXISTS(
-				SELECT 1 FROM endpoints
-				WHERE (normalized_name, user_id) = (@NormalizedName, @UserId));
-			""";
+		const string sql = 
+			"SELECT EXISTS(SELECT 1 FROM endpoints WHERE (normalized_name, user_id) = (@NormalizedName, @UserId));";
 		
 		var command = new CommandDefinition(
 			sql, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 		
 		return await Connection.ExecuteScalarAsync<bool>(command);
-	}	
+	}
 
 	public async Task<int> CreateAsync(Endpoint endpoint, CancellationToken ct)
 	{
@@ -44,18 +41,18 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return await Connection.ExecuteScalarAsync<int>(command);
 	}
 
-	public async Task<int?> GetIdIfExistsAsync(string endpoint, Guid userId, CancellationToken ct)
+	public async Task<int?> GetIdIfExistsAsync(string name, Guid userId, CancellationToken ct)
 	{
 		const string query = "SELECT id FROM endpoints WHERE (normalized_name, user_id) = (@NormalizedName, @UserId);";
 		
 		var command = new CommandDefinition(
-			query, new { NormalizedName = endpoint.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
+			query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 		
 		return await Connection.QuerySingleOrDefaultAsync<int?>(command);
 	}
 	
 	public async Task<EndpointResponse?> GetModelIfExistsAsync(
-		string endpointName, Guid userId, bool includePropertiesAndRules, CancellationToken ct)
+		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct)
 	{
 		string query;
 		CommandDefinition command;
@@ -66,7 +63,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			query = "SELECT name FROM endpoints WHERE (normalized_name, user_id) = (@NormalizedName, @UserId);";
 			
 			command = new CommandDefinition(
-				query, new { NormalizedName = endpointName.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
+				query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 			
 			return (await Connection.QuerySingleOrDefaultAsync<Endpoint>(command))?.ToResponse([]);
 		}
@@ -83,7 +80,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			""";
 		
 		command = new CommandDefinition(
-				query, new { NormalizedName = endpointName.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
+				query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 		
 		var queryResult = (List<Endpoint>)
 			await Connection.QueryAsync<Endpoint, Property, Rule?, Endpoint>(command, (e, p, r) =>
@@ -118,5 +115,21 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			.ToArray();
 		
 		return queryResult.First().ToResponse(responseProperties);
+	}
+	
+	public async Task RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)
+	{
+		const string query = """
+			UPDATE endpoints
+			SET name = @NewName, normalized_name = @NewNormalizedName
+			WHERE id = @EndpointId;
+			""";
+		
+		var dParams = new DynamicParameters(endpoint);
+		dParams.Add(nameof(endpointId), endpointId);
+		
+		var command = new CommandDefinition(query, dParams, Transaction, cancellationToken: ct);
+		
+		await Connection.ExecuteAsync(command);
 	}
 }
