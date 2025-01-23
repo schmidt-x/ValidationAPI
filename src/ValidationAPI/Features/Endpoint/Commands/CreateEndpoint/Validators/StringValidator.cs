@@ -31,6 +31,7 @@ public static partial class PropertyRuleValidators
 			string? ruleRawValue = null;
 			string? ruleExtraInfo = null;
 			bool isRuleRelative = false;
+			var ruleValueType = RuleValueType.String;
 			
 			var value = rule.Value;
 			switch (rule.Type)
@@ -53,6 +54,7 @@ public static partial class PropertyRuleValidators
 							if (failures.Count != 0) continue;
 							ruleValue = val.ToString();
 							ruleExtraInfo = RuleExtraInfo.ByLength;
+							ruleValueType = RuleValueType.Int;
 							break;
 						
 						case JsonValueKind.String:
@@ -228,6 +230,7 @@ public static partial class PropertyRuleValidators
 				Type = rule.Type,
 				Value = ruleValue,
 				RawValue = ruleRawValue,
+				ValueType = ruleValueType,
 				ExtraInfo = ruleExtraInfo,
 				IsRelative = isRuleRelative,
 				ErrorMessage = rule.ErrorMessage

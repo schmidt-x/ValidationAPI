@@ -13,6 +13,8 @@ public class EndpointMigration : Migration
 			CREATE TYPE ruletype AS ENUM (
 				'Less', 'More', 'LessOrEqual', 'MoreOrEqual', 'Equal', 'NotEqual', 'Between', 'Outside', 'Regex', 'Email');
 
+			CREATE TYPE rulevaluetype AS ENUM ('Int', 'Float', 'String');
+
 			CREATE TABLE endpoints (
 				id              SERIAL PRIMARY KEY,
 				name            TEXT   NOT NULL,
@@ -38,12 +40,13 @@ public class EndpointMigration : Migration
 				normalized_name TEXT     NOT NULL,
 				type            RULETYPE NOT NULL,
 				value           TEXT     NOT NULL,
+				value_type      RULEVALUETYPE NOT NULL,
 				raw_value       TEXT,
 				extra_info      TEXT,
-				is_relative     BOOL     NOT NULL,
+				is_relative     BOOL NOT NULL,
 				error_message   TEXT,
-				property_id     SERIAL   REFERENCES properties(id) ON DELETE CASCADE,
-				endpoint_id     SERIAL   REFERENCES endpoints(id)  ON DELETE CASCADE,
+				property_id     SERIAL REFERENCES properties(id) ON DELETE CASCADE,
+				endpoint_id     SERIAL REFERENCES endpoints(id)  ON DELETE CASCADE,
 
 				UNIQUE (normalized_name, endpoint_id)
 			);
@@ -56,7 +59,7 @@ public class EndpointMigration : Migration
 	{
 		const string sql = """
 			DROP TABLE rules, properties, endpoints;
-			DROP TYPE ruletype, propertytype;
+			DROP TYPE propertytype, ruletype, rulevaluetype;
 			""";
 		
 		Execute.Sql(sql);

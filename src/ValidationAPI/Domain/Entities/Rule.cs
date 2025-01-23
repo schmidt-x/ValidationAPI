@@ -9,6 +9,7 @@ public class Rule
 	public string NormalizedName { get; init; } = null!;
 	public RuleType Type { get; init; }
 	public string Value { get; init; } = null!;
+	public RuleValueType ValueType { get; init; }
 	public string? RawValue { get; init; }
 	public string? ExtraInfo { get; init; }
 	public bool IsRelative { get; init; }
