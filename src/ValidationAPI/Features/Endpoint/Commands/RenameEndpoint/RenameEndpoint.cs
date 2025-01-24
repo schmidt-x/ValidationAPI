@@ -5,8 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using ValidationAPI.Common.Exceptions;
+using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Services;
 using ValidationAPI.Data;
+using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Infra;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
@@ -30,7 +32,7 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 		_logger = logger;
 	}
 	
-	public async Task<Exception?> Handle(RenameEndpointCommand command, CancellationToken ct)
+	public async Task<Result<EndpointResponse>> Handle(RenameEndpointCommand command, CancellationToken ct)
 	{
 		var validationResult = _validator.Validate(command);
 		if (!validationResult.IsValid)
@@ -54,10 +56,12 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 				$"Endpoint with the name '{command.NewName}' already exists (case-insensitive).");
 		}
 		
+		var newEndpoint = new Domain.Models.RenameEndpoint(command.NewName, command.NewName.ToUpperInvariant());
+		EndpointResponse response;
+		
 		try
 		{
-			var newEndpoint = new Domain.Models.RenameEndpoint(command.NewName, command.NewName.ToUpperInvariant());
-			await _db.Endpoints.RenameAsync(newEndpoint, endpointId.Value, ct);
+			response = await _db.Endpoints.RenameAsync(newEndpoint, endpointId.Value, ct);
 		}
 		catch (Exception ex)
 		{
@@ -71,6 +75,6 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 			"[{UserId}] [{Action}] [{EndpointId}] " + $"'{command.Endpoint}' -> '{command.NewName}'",
 			userId, "RenameEndpoint", endpointId.Value);
 		
-		return null;
+		return response;
 	}
 }

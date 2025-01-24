@@ -16,10 +16,13 @@ public class EndpointMigration : Migration
 			CREATE TYPE rulevaluetype AS ENUM ('Int', 'Float', 'String');
 
 			CREATE TABLE endpoints (
-				id              SERIAL PRIMARY KEY,
-				name            TEXT   NOT NULL,
-				normalized_name TEXT   NOT NULL,
-				user_id         UUID   NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				id              SERIAL      PRIMARY KEY,
+				name            TEXT        NOT NULL,
+				normalized_name TEXT        NOT NULL,
+				description     TEXT,
+				created_at      TIMESTAMPTZ NOT NULL,
+				modified_at     TIMESTAMPTZ NOT NULL,
+				user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
 				UNIQUE (normalized_name, user_id)
 			);

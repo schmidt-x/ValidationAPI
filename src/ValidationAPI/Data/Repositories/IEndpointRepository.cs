@@ -12,9 +12,9 @@ public interface IEndpointRepository
 	Task<int> CreateAsync(Endpoint endpoint, CancellationToken ct);
 	Task<int?> GetIdIfExistsAsync(string name, Guid userId, CancellationToken ct);
 	
-	Task<EndpointResponse?> GetModelIfExistsAsync(
+	Task<EndpointExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct);
 	
-	Task RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
+	Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int endpointId, CancellationToken ct);
 }

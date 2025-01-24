@@ -31,8 +31,8 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 	public async Task<int> CreateAsync(Endpoint endpoint, CancellationToken ct)
 	{
 		const string sql = """
-			INSERT INTO endpoints (name, normalized_name, user_id)
-			VALUES (@Name, @NormalizedName, @UserId)
+			INSERT INTO endpoints (name, normalized_name, description, created_at, modified_at, user_id)
+			VALUES (@Name, @NormalizedName, @Description, @CreatedAt, @ModifiedAt, @UserId)
 			RETURNING id;
 		""";
 		
@@ -51,7 +51,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return await Connection.QuerySingleOrDefaultAsync<int?>(command);
 	}
 	
-	public async Task<EndpointResponse?> GetModelIfExistsAsync(
+	public async Task<EndpointExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct)
 	{
 		string query;
@@ -59,18 +59,19 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		if (!includePropertiesAndRules)
 		{
-			// TODO: include Created and Updated dates
-			query = "SELECT name FROM endpoints WHERE (normalized_name, user_id) = (@NormalizedName, @UserId);";
-			
+			query = """
+				SELECT name, description, created_at, modified_at
+				FROM endpoints
+				WHERE (normalized_name, user_id) = (@NormalizedName, @UserId);
+				""";
 			command = new CommandDefinition(
 				query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 			
 			return (await Connection.QuerySingleOrDefaultAsync<Endpoint>(command))?.ToResponse([]);
 		}
 		
-		// TODO: include Created and Updated dates for Endpoint
 		query = """
-			SELECT e.id, e.name,
+			SELECT e.id, e.name, e.description, e.created_at, e.modified_at,
 			       p.id, p.name, p.type, p.is_optional,
 			       r.id, r.name, r.type, r.value, r.value_type, r.raw_value, r.error_message, r.property_id
 			FROM endpoints e
@@ -117,12 +118,15 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return queryResult.First().ToResponse(responseProperties);
 	}
 	
-	public async Task RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)
+	public async Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)
 	{
 		const string query = """
 			UPDATE endpoints
-			SET name = @NewName, normalized_name = @NewNormalizedName
-			WHERE id = @EndpointId;
+			SET name = @NewName,
+			    normalized_name = @NewNormalizedName,
+			    modified_at = now() AT TIME ZONE 'utc'
+			WHERE id = @EndpointId
+			RETURNING name, description, created_at, modified_at;
 			""";
 		
 		var dParams = new DynamicParameters(endpoint);
@@ -130,7 +134,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		var command = new CommandDefinition(query, dParams, Transaction, cancellationToken: ct);
 		
-		await Connection.ExecuteAsync(command);
+		return await Connection.QuerySingleAsync<EndpointResponse>(command);
 	}
 	
 	public async Task DeleteAsync(int endpointId, CancellationToken ct)

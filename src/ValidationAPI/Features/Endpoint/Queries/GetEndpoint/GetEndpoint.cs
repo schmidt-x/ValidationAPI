@@ -28,7 +28,7 @@ public class GetEndpointQueryHandler : RequestHandlerBase
 		_db = db;
 	}
 	
-	public async Task<Result<EndpointResponse>> Handle(GetEndpointQuery query, CancellationToken ct)
+	public async Task<Result<EndpointExpandedResponse>> Handle(GetEndpointQuery query, CancellationToken ct)
 	{
 		if (!_validator.Validate(query).IsValid)
 		{
@@ -36,7 +36,7 @@ public class GetEndpointQueryHandler : RequestHandlerBase
 		}
 		
 		var userId = _user.Id();
-		var endpoint = await _db.Endpoints.GetModelIfExistsAsync(query.Endpoint, userId, query.IncludePropertiesAndRules, ct);
+		var endpoint = await _db.Endpoints.GetExpandedResponseIfExistsAsync(query.Endpoint, userId, query.IncludePropertiesAndRules, ct);
 		
 		// TODO: get Entity from db and convert it into Model here instead?
 		// var responseProperties = endpoint.Properties

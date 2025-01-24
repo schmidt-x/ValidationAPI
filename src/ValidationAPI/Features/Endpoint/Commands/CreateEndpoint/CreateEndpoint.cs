@@ -14,10 +14,10 @@ using ValidationAPI.Features.Infra;
 using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint.Validators;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
-
 namespace ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
 
-public record CreateEndpointCommand(string Endpoint, Dictionary<string, PropertyRequest> Properties);
+public record CreateEndpointCommand(
+	string Endpoint, string? Description, Dictionary<string, PropertyRequest> Properties);
 
 public class CreateEndpointCommandHandler : RequestHandlerBase
 {
@@ -81,10 +81,15 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			return new OperationInvalidException($"Endpoint '{command.Endpoint}' already exists.");
 		}
 		
+		var timeNow = DateTimeOffset.UtcNow;
+		
 		var endpoint = new Domain.Entities.Endpoint
 		{
 			Name = command.Endpoint,
 			NormalizedName = command.Endpoint.ToUpperInvariant(),
+			Description = command.Description,
+			CreatedAt = timeNow,
+			ModifiedAt = timeNow,
 			UserId = userId
 		};
 		

@@ -1,11 +1,11 @@
-﻿using ValidationAPI.Domain.Entities;
+﻿using System;
 
 namespace ValidationAPI.Domain.Models;
 
-public record EndpointResponse(string Name, PropertyResponse[] Properties);
-
-public static class EndpointExtensions
+public class EndpointResponse(string name, string? description, DateTimeOffset createdAt, DateTimeOffset modifiedAt)
 {
-	public static EndpointResponse ToResponse(this Endpoint endpoint, PropertyResponse[] properties)
-		=> new(endpoint.Name, properties);
+	public string Name { get; } = name;
+	public string Description { get; } = description ?? string.Empty;
+	public DateTimeOffset CreatedAt { get; } = createdAt;
+	public DateTimeOffset ModifiedAt { get; } = modifiedAt;
 }

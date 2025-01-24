@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,12 +42,12 @@ public class Endpoint : EndpointGroupBase
 		
 		g.MapGet("{endpoint}", Get)
 			.WithSummary("Returns an endpoint (optionally includes Properties and Rules)")
-			.Produces<EndpointResponse>()
+			.Produces<EndpointExpandedResponse>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
-		g.MapPut("{endpoint}", Rename)
+		g.MapPatch("rename/{endpoint}", Rename)
 			.WithSummary("Renames an endpoint")
-			.Produces(StatusCodes.Status204NoContent)
+			.Produces<EndpointResponse>()
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
@@ -64,7 +63,7 @@ public class Endpoint : EndpointGroupBase
 		CreateEndpointCommandHandler handler,
 		CancellationToken ct)
 	{
-		var command = new CreateEndpointCommand(request.Endpoint, request.Properties);
+		var command = new CreateEndpointCommand(request.Endpoint, request.Description, request.Properties);
 		var ex = await handler.Handle(command, ct);
 		
 		return ex is null
@@ -97,7 +96,7 @@ public class Endpoint : EndpointGroupBase
 		[FromQuery] bool includePropertiesAndRules = true)
 	{
 		var query = new GetEndpointQuery(endpoint, includePropertiesAndRules);
-		Result<EndpointResponse> result = await handler.Handle(query, ct);
+		Result<EndpointExpandedResponse> result = await handler.Handle(query, ct);
 		
 		return result.Match<IResult>(Results.Ok, _ => Results.NotFound());
 	}
@@ -108,14 +107,13 @@ public class Endpoint : EndpointGroupBase
 		RenameEndpointCommandHandler handler,
 		CancellationToken ct)
 	{
-		Exception? ex = await handler.Handle(new RenameEndpointCommand(endpoint, newName), ct);
+		Result<EndpointResponse> result = await handler.Handle(new RenameEndpointCommand(endpoint, newName), ct);
 		
-		return ex switch
-		{
-			null => Results.NoContent(),
-			NotFoundException => Results.NotFound(),
-			_ => Results.UnprocessableEntity(FailResponse.From(ex))
-		};
+		return result.Match<IResult>(
+			Results.Ok,
+			ex => ex is NotFoundException
+				? Results.NotFound()
+				: Results.UnprocessableEntity(FailResponse.From(ex)));
 	}
 	
 	public static async Task<IResult> Delete(
