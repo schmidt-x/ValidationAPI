@@ -1,8 +1,9 @@
 ﻿using System;
+using ValidationAPI.Domain.Common;
 
 namespace ValidationAPI.Domain.Entities;
 
-public class User
+public class User : BaseAuditableEntity
 {
 	public Guid Id { get; init; }
 	public string Email { get; init; } = null!;
@@ -11,6 +12,4 @@ public class User
 	public string NormalizedUsername { get; init; } = null!;
 	public string PasswordHash { get; init; } = null!;
 	public bool IsConfirmed { get; init; }
-	public DateTimeOffset CreatedAt { get; init; }
-	public DateTimeOffset ModifiedAt { get; init; }
 }

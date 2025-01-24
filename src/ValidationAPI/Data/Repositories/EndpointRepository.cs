@@ -118,6 +118,21 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return queryResult.First().ToResponse(responseProperties);
 	}
 	
+	public async Task<IReadOnlyCollection<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct)
+	{
+		const string query = """
+			SELECT name, description, created_at, modified_at
+			FROM endpoints
+			WHERE user_id = @UserId;
+			""";
+		
+		var command = new CommandDefinition(query, new { userId }, Transaction, cancellationToken: ct);
+		
+		var endpoints = await Connection.QueryAsync<EndpointResponse>(command);
+		
+		return (IReadOnlyCollection<EndpointResponse>)endpoints;
+	}
+	
 	public async Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)
 	{
 		const string query = """

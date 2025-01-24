@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ValidationAPI.Domain.Entities;
@@ -15,6 +16,7 @@ public interface IEndpointRepository
 	Task<EndpointExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct);
 	
+	Task<IReadOnlyCollection<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct);
 	Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int endpointId, CancellationToken ct);
 }

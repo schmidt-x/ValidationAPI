@@ -12,6 +12,7 @@ using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
 using ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
 using ValidationAPI.Features.Endpoint.Commands.DeleteEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
+using ValidationAPI.Features.Endpoint.Queries.GetEndpoints;
 using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
 using ValidationAPI.Infra;
 using ValidationAPI.Responses;
@@ -43,6 +44,11 @@ public class Endpoint : EndpointGroupBase
 		g.MapGet("{endpoint}", Get)
 			.WithSummary("Returns an endpoint (optionally includes Properties and Rules)")
 			.Produces<EndpointExpandedResponse>()
+			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapGet("", GetAll)
+			.WithSummary("Returns all endpoints")
+			.Produces<IReadOnlyCollection<EndpointResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
 		g.MapPatch("rename/{endpoint}", Rename)
@@ -99,6 +105,15 @@ public class Endpoint : EndpointGroupBase
 		Result<EndpointExpandedResponse> result = await handler.Handle(query, ct);
 		
 		return result.Match<IResult>(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public static async Task<IResult> GetAll(
+		GetEndpointsQueryHandler handler,
+		CancellationToken ct)
+	{
+		var endpoints = await handler.Handle(ct);
+		
+		return Results.Ok(endpoints);
 	}
 	
 	public static async Task<IResult> Rename(
