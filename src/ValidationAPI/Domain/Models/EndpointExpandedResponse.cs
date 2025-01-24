@@ -8,6 +8,6 @@ public record EndpointExpandedResponse(
 
 public static class EndpointExtensions
 {
-	public static EndpointExpandedResponse ToResponse(this Endpoint endpoint, PropertyResponse[] properties)
+	public static EndpointExpandedResponse ToExpandedResponse(this Endpoint endpoint, PropertyResponse[] properties)
 		=> new(endpoint.Name, endpoint.Description ?? string.Empty, endpoint.CreatedAt, endpoint.ModifiedAt, properties);
 }

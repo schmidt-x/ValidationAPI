@@ -11,6 +11,7 @@ using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
 using ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
 using ValidationAPI.Features.Endpoint.Commands.DeleteEndpoint;
+using ValidationAPI.Features.Endpoint.Commands.UpdateDescription;
 using ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
 using ValidationAPI.Features.Endpoint.Queries.GetEndpoints;
 using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
@@ -55,6 +56,12 @@ public class Endpoint : EndpointGroupBase
 			.WithSummary("Renames an endpoint")
 			.Produces<EndpointResponse>()
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized)
+			.DisableAntiforgery(); // TODO: remove
+		
+		g.MapPatch("update-description/{endpoint}", UpdateDescription)
+			.WithSummary("Updates a description")
+			.Produces<EndpointResponse>()
 			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
 		
@@ -125,6 +132,22 @@ public class Endpoint : EndpointGroupBase
 		Result<EndpointResponse> result = await handler.Handle(new RenameEndpointCommand(endpoint, newName), ct);
 		
 		return result.Match<IResult>(
+			Results.Ok,
+			ex => ex is NotFoundException
+				? Results.NotFound()
+				: Results.UnprocessableEntity(FailResponse.From(ex)));
+	}
+	
+	public static async Task<IResult> UpdateDescription(
+		[FromRoute] string endpoint,
+		[FromForm] string? description,
+		UpdateDescriptionCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new UpdateDescriptionCommand(endpoint, description);
+		Result<EndpointResponse> result = await handler.Handle(command, ct);
+		
+		return result.Match(
 			Results.Ok,
 			ex => ex is NotFoundException
 				? Results.NotFound()

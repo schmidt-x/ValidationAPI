@@ -67,7 +67,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			command = new CommandDefinition(
 				query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 			
-			return (await Connection.QuerySingleOrDefaultAsync<Endpoint>(command))?.ToResponse([]);
+			return (await Connection.QuerySingleOrDefaultAsync<Endpoint>(command))?.ToExpandedResponse([]);
 		}
 		
 		query = """
@@ -115,7 +115,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			})
 			.ToArray();
 		
-		return queryResult.First().ToResponse(responseProperties);
+		return queryResult.First().ToExpandedResponse(responseProperties);
 	}
 	
 	public async Task<IReadOnlyCollection<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct)
@@ -148,6 +148,28 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		dParams.Add(nameof(endpointId), endpointId);
 		
 		var command = new CommandDefinition(query, dParams, Transaction, cancellationToken: ct);
+		
+		return await Connection.QuerySingleAsync<EndpointResponse>(command);
+	}
+	
+	public async Task<EndpointResponse> UpdateDescriptionAsync(string? description, int endpointId, CancellationToken ct)
+	{
+		const string query = """
+			WITH updated_endpoint AS (
+				UPDATE endpoints
+				SET description = @Description,
+			      modified_at = now() AT TIME ZONE 'utc'
+				WHERE id = @EndpointId AND description != @Description
+				RETURNING name, description, created_at, modified_at
+			)
+			SELECT * FROM updated_endpoint
+			UNION ALL
+			SELECT name, description, created_at, modified_at
+			FROM endpoints
+			WHERE NOT EXISTS (SELECT 1 FROM updated_endpoint) AND id = @EndpointId;
+			""";
+		
+		var command = new CommandDefinition(query, new { description, endpointId }, Transaction, cancellationToken: ct);
 		
 		return await Connection.QuerySingleAsync<EndpointResponse>(command);
 	}
