@@ -3,7 +3,7 @@ using static ValidationAPI.Domain.Constants.ErrorCodes;
 using System.Text.RegularExpressions;
 using FluentValidation;
 
-namespace ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.RenameEndpoint;
 
 public class RenameEndpointCommandValidator : AbstractValidator<RenameEndpointCommand>
 {

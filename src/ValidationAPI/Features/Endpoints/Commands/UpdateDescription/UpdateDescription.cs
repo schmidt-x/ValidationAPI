@@ -10,7 +10,7 @@ using ValidationAPI.Data;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Infra;
 
-namespace ValidationAPI.Features.Endpoint.Commands.UpdateDescription;
+namespace ValidationAPI.Features.Endpoints.Commands.UpdateDescription;
 
 public record UpdateDescriptionCommand(string Endpoint, string? Description);
 

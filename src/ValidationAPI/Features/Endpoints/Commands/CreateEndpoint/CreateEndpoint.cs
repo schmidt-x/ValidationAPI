@@ -15,7 +15,7 @@ using ValidationAPI.Features.Infra;
 using ValidationAPI.Common.Validators.RuleValidators;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
-namespace ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.CreateEndpoint;
 
 public record CreateEndpointCommand(
 	string Endpoint, string? Description, Dictionary<string, PropertyRequest> Properties);
@@ -89,7 +89,7 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		
 		var timeNow = DateTimeOffset.UtcNow;
 		
-		var endpoint = new Domain.Entities.Endpoint
+		var endpoint = new Endpoint
 		{
 			Name = command.Endpoint,
 			NormalizedName = command.Endpoint.ToUpperInvariant(),

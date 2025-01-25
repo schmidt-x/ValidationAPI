@@ -8,7 +8,7 @@ using ValidationAPI.Domain.Constants;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
 
-namespace ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint.Validators;
+namespace ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint.Validators;
 
 file delegate bool Validator(string left, string right, Rule rule);
 

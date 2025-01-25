@@ -8,7 +8,7 @@ using ValidationAPI.Data;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Infra;
 
-namespace ValidationAPI.Features.Endpoint.Queries.GetEndpoint;
+namespace ValidationAPI.Features.Endpoints.Queries.GetEndpoint;
 
 public record GetEndpointQuery(string Endpoint, bool IncludePropertiesAndRules);
 

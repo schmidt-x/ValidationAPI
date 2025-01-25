@@ -12,7 +12,7 @@ using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Infra;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
-namespace ValidationAPI.Features.Endpoint.Commands.RenameEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.RenameEndpoint;
 
 public record RenameEndpointCommand(string Endpoint, string NewName);
 

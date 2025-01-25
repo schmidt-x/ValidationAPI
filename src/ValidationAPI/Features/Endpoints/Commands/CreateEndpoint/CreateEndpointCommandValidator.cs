@@ -5,7 +5,7 @@ using FluentValidation;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
 
-namespace ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.CreateEndpoint;
 
 public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEndpointCommand>
 {

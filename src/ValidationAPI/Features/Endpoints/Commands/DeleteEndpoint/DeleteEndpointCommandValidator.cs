@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
 
-namespace ValidationAPI.Features.Endpoint.Commands.DeleteEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.DeleteEndpoint;
 
 public class DeleteEndpointCommandValidator : AbstractValidator<DeleteEndpointCommand>
 {

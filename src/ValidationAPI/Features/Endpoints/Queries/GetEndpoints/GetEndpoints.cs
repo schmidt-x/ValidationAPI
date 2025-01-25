@@ -6,7 +6,7 @@ using ValidationAPI.Data;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Infra;
 
-namespace ValidationAPI.Features.Endpoint.Queries.GetEndpoints;
+namespace ValidationAPI.Features.Endpoints.Queries.GetEndpoints;
 
 public class GetEndpointsQueryHandler : RequestHandlerBase
 {

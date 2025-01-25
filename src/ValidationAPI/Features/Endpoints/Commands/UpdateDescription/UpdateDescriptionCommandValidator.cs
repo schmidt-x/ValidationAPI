@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
 
-namespace ValidationAPI.Features.Endpoint.Commands.UpdateDescription;
+namespace ValidationAPI.Features.Endpoints.Commands.UpdateDescription;
 
 public class UpdateDescriptionCommandValidator : AbstractValidator<UpdateDescriptionCommand>
 {

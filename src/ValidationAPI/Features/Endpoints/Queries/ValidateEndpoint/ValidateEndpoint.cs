@@ -13,12 +13,12 @@ using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
-using ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint.Validators;
+using ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint.Validators;
 using ValidationAPI.Features.Infra;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
-namespace ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
+namespace ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint;
 
 public record ValidateEndpointQuery(string Endpoint, Dictionary<string, JsonElement> Body);
 

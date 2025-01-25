@@ -8,7 +8,7 @@ using ValidationAPI.Common.Services;
 using ValidationAPI.Data;
 using ValidationAPI.Features.Infra;
 
-namespace ValidationAPI.Features.Endpoint.Commands.DeleteEndpoint;
+namespace ValidationAPI.Features.Endpoints.Commands.DeleteEndpoint;
 
 public record DeleteEndpointCommand(string Endpoint);
 

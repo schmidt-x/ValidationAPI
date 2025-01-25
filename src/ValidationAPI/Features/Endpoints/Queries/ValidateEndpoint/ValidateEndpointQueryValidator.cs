@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
 
-namespace ValidationAPI.Features.Endpoint.Queries.ValidateEndpoint;
+namespace ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint;
 
 public class ValidateEndpointQueryValidator : AbstractValidator<ValidateEndpointQuery>
 {
