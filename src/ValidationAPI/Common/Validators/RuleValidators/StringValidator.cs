@@ -10,22 +10,26 @@ using ValidationAPI.Domain.Enums;
 using ValidationAPI.Domain.Constants;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 
-namespace ValidationAPI.Features.Endpoint.Commands.CreateEndpoint.Validators;
+namespace ValidationAPI.Common.Validators.RuleValidators;
 
-public static partial class PropertyRuleValidators
+public static partial class RuleValidators
 {
 	[GeneratedRegex(@"^{(\w+)(\..+)?}$")]
 	private static partial Regex GetPropertyAndOptionRegex();
 	
-	public static Property? ValidateString(
-		KeyValuePair<string, PropertyRequest> property,
+	public static List<Rule>? ValidateString(
+		string propertyName, RuleRequest[] rules,
 		Dictionary<string, PropertyRequest> properties,
 		Dictionary<string, List<ErrorDetail>> failures)
 	{
 		List<Rule> validatedRules = [];
-		property.Deconstruct(out var propertyName, out var propertyRequest);
 		
-		foreach (var rule in propertyRequest.Rules)
+		if (rules.Length == 0)
+		{
+			return failures.Count == 0 ? validatedRules : null;
+		}
+		
+		foreach (var rule in rules)
 		{
 			string ruleValue;
 			string? ruleRawValue = null;
@@ -131,11 +135,11 @@ public static partial class PropertyRuleValidators
 										$"[{rule.Name}] Target property '{targetPropertyName}' not found (case-sensitive).");
 									continue;
 								}
-								if (targetProperty.Type != propertyRequest.Type)
+								if (targetProperty.Type != PropertyType.String)
 								{
 									failures.AddErrorDetail(
 										propertyName, INVALID_RULE_VALUE,
-										$"[{rule.Name}] Target property '{targetPropertyName}' must be of the same type.");
+										$"[{rule.Name}] Target property '{targetPropertyName}' must be of the same type (String).");
 									continue;
 								}
 								if (targetProperty.IsOptional)
@@ -214,14 +218,14 @@ public static partial class PropertyRuleValidators
 				case RuleType.Email:
 					// rule.Value is ignored
 					if (failures.Count != 0) continue;
-					ruleValue = "";
+					ruleValue = string.Empty;
 					break;
 					
 				default:
-					throw new ArgumentOutOfRangeException(nameof(property));
+					throw new ArgumentOutOfRangeException(nameof(rules));
 			}
 			
-			Debug.Assert(failures.Count == 0);
+			Debug.Assert(failures.Count == 0, "Call 'continue' if the rule has failed or 'failures.Count' != 0.");
 			
 			validatedRules.Add(new Rule
 			{
@@ -237,15 +241,7 @@ public static partial class PropertyRuleValidators
 			});
 		}
 		
-		if (failures.Count != 0) return null;
-		
-		return new Property
-		{
-			Name = propertyName,
-			Type = propertyRequest.Type,
-			IsOptional = propertyRequest.IsOptional,
-			Rules = validatedRules
-		};
+		return failures.Count == 0 ? validatedRules : null;
 	}
 	
 	

@@ -31,9 +31,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 	private readonly IUser _user;
 	
 	public ValidateEndpointQueryHandler(
-		IValidator<ValidateEndpointQuery> validator,
-		IUser user,
-		IRepositoryContext db)
+		IValidator<ValidateEndpointQuery> validator, IUser user, IRepositoryContext db)
 	{
 		_validator = validator;
 		_user = user;
@@ -44,7 +42,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 	{
 		if (!_validator.Validate(query).IsValid)
 		{
-			return new NotFoundException(); // TODO: return ValidationException instead?
+			return new NotFoundException();
 		}
 		
 		var endpointId = await _db.Endpoints.GetIdIfExistsAsync(query.Endpoint, _user.Id(), ct);
@@ -60,7 +58,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 		
 		foreach (var dbProperty in dbProperties)
 		{
-			if (!query.Body.TryGetValue(dbProperty.Name, out var requestProperty))
+			if (!query.Body.TryGetValue(dbProperty.Name, out var requestValue))
 			{
 				if (!dbProperty.IsOptional)
 				{
@@ -74,10 +72,10 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 			{
 				case PropertyType.Int:
 				case PropertyType.Float:
-					if (requestProperty.ValueKind != JsonValueKind.Number)
+					if (requestValue.ValueKind != JsonValueKind.Number)
 					{
 						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE, 
-							$"Expected property type is Number; got: {requestProperty.ValueKind}.");
+							$"Expected property type is Number; got: {requestValue.ValueKind}.");
 						continue;
 					}
 					break;
@@ -85,10 +83,10 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 				case PropertyType.DateTime:
 				case PropertyType.DateOnly:
 				case PropertyType.TimeOnly:
-					if (requestProperty.ValueKind != JsonValueKind.String)
+					if (requestValue.ValueKind != JsonValueKind.String)
 					{
 						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE,
-							$"Expected property type is String; got: {requestProperty.ValueKind}.");
+							$"Expected property type is String; got: {requestValue.ValueKind}.");
 						continue;
 					}
 					break;
@@ -99,7 +97,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 			if (failures.Count != 0) continue;
 			
 			unvalidatedProperties.Add(
-				new UnvalidatedProperty(dbProperty.Id, dbProperty.Name, dbProperty.Type, requestProperty));
+				new UnvalidatedProperty(dbProperty.Id, dbProperty.Name, dbProperty.Type, requestValue));
 		}
 		
 		if (failures.Count != 0)
@@ -115,7 +113,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 			if (!sortedRules.TryGetValue(property.Id, out var rules))
 				continue; // no rules for a property
 			
-			Validator validator = property.Type switch
+			PropertyValidator validator = property.Type switch
 			{
 				PropertyType.String   => PropertyValidators.ValidateString,
 				PropertyType.Int      => throw new NotImplementedException(),
@@ -138,7 +136,7 @@ public class ValidateEndpointQueryHandler : RequestHandlerBase
 	}
 	
 	
-	private delegate void Validator(
+	private delegate void PropertyValidator(
 		UnvalidatedProperty property,
 		Rule[] rules,
 		Dictionary<string, JsonElement> requestBody,

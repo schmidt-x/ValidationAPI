@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using Serilog;
+using ValidationAPI.Common.Delegates;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Services;
@@ -11,7 +12,7 @@ using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
 using ValidationAPI.Features.Infra;
-using ValidationAPI.Features.Endpoint.Commands.CreateEndpoint.Validators;
+using ValidationAPI.Common.Validators.RuleValidators;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
 namespace ValidationAPI.Features.Endpoint.Commands.CreateEndpoint;
@@ -48,13 +49,13 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		}
 		
 		Dictionary<string, List<ErrorDetail>> failures = [];
-		List<Property> validatedProperties = [];
+		List<Property> propertiesToSave = [];
 		
-		foreach (var property in command.Properties)
+		foreach ((string propertyName, PropertyRequest property) in command.Properties)
 		{
-			PropertyRuleValidator validator = property.Value.Type switch
+			RuleValidator validator = property.Type switch
 			{
-				PropertyType.String   => PropertyRuleValidators.ValidateString,
+				PropertyType.String   => RuleValidators.ValidateString,
 				PropertyType.Int      => throw new NotImplementedException(),
 				PropertyType.Float    => throw new NotImplementedException(), // TODO: combine with Int?
 				PropertyType.DateTime => throw new NotImplementedException(), // TODO: combine with the following two?
@@ -63,11 +64,16 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 				_ => throw new ArgumentOutOfRangeException(nameof(command))
 			};
 			
-			var validatedProperty = validator.Invoke(property, command.Properties, failures);
-			if (validatedProperty != null)
+			var validatedRules = validator.Invoke(propertyName, property.Rules, command.Properties, failures);
+			if (validatedRules is null) continue;
+			
+			propertiesToSave.Add(new Property
 			{
-				validatedProperties.Add(validatedProperty);
-			}
+				Name = propertyName,
+				Type = property.Type,
+				IsOptional = property.IsOptional,
+				Rules = validatedRules
+			});
 		}
 		
 		if (failures.Count != 0)
@@ -99,15 +105,13 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		{
 			var endpointId = await _db.Endpoints.CreateAsync(endpoint, ct);
 			
-			foreach (var property in validatedProperties)
+			foreach (var property in propertiesToSave)
 			{
 				property.EndpointId = endpointId;
 				var propertyId = await _db.Properties.CreateAsync(property, ct);
 				if (property.Rules.Count == 0) continue;
 				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId, ct);
 			}
-			
-			await _db.SaveChangesAsync(ct);
 		}
 		catch (Exception ex)
 		{
@@ -117,15 +121,11 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			throw;
 		}
 		
+		await _db.SaveChangesAsync(ct);
+		
 		_logger.Information(
 			"[{UserId}] [{Action}] New endpoint is created: {Endpoint}.", userId, "CreateEndpoint", endpoint.Name);
 		
 		return null;
 	}
-
-	
-	private delegate Property? PropertyRuleValidator(
-		KeyValuePair<string, PropertyRequest> property,
-		Dictionary<string, PropertyRequest> properties,
-		Dictionary<string, List<ErrorDetail>> failures);
 }
