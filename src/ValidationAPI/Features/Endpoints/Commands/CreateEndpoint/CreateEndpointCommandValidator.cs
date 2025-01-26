@@ -13,22 +13,21 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 	{
 		RuleFor(x => x.Endpoint)
 			.NotEmpty()
-			.WithErrorCode(EMPTY_VALUE)
-			.WithMessage("Endpoint is required.");
+			.WithErrorCode(EMPTY_ENDPOINT_NAME)
+			.WithMessage("Endpoint is required.")
 		
-		RuleFor(x => x.Endpoint)
 			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled)
-			.WithErrorCode(INVALID_CHAR_IN_VALUE)
-			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.");
+			.WithErrorCode(INVALID_ENDPOINT_NAME)
+			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.")
+			.When(x => !string.IsNullOrEmpty(x.Endpoint), ApplyConditionTo.CurrentValidator);
 		
 		RuleFor(x => x.Properties)
 			.NotEmpty()
-			.WithErrorCode(EMPTY_VALUE)
+			.WithErrorCode(EMPTY_PROPERTY)
 			.WithMessage("At least one property is required.")
 			.Custom(Validator)
 			.When(x => x.Properties is { Count: > 0 }, ApplyConditionTo.CurrentValidator);
 	}
-	
 	
 	private static void Validator(
 		Dictionary<string, PropertyRequest> properties, ValidationContext<CreateEndpointCommand> context)
@@ -37,11 +36,17 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 					
 		foreach ((string propertyName, PropertyRequest property) in properties)
 		{
+			if (string.IsNullOrEmpty(propertyName))
+			{
+				context.AddFailure("Properties.", EMPTY_PROPERTY_NAME, "Property name must not be empty.");
+				continue;
+			}
+			
 			if (!PropertyNameRegex().IsMatch(propertyName))
 			{
-				context.AddFailure(propertyName, INVALID_CHAR_IN_VALUE,
-					"Property name can only contain letters (a-z, A-Z), underscores (_), " +
-					" or digits (0-9) (except at the beginning).");	
+				context.AddFailure(
+					$"Properties.{propertyName}", INVALID_PROPERTY_NAME,
+					"Property name can only contain letters (a-z, A-Z), underscores (_), or digits (0-9) (except at the beginning).");	
 				continue;
 			}
 			
@@ -51,7 +56,7 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 			{
 				if (string.IsNullOrWhiteSpace(rule.Name))
 				{
-					context.AddFailure(propertyName, EMPTY_RULE_NAME, "Rule names must not be empty.");
+					context.AddFailure($"Properties.{propertyName}", EMPTY_RULE_NAME, "Rule names must not be empty.");
 					break;
 				}
 				
@@ -59,7 +64,8 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 				
 				if (!ruleNames.Add(rule.Name.ToUpperInvariant()))
 				{
-					context.AddFailure(propertyName, DUPLICATE_RULE_NAME,
+					context.AddFailure(
+						$"Properties.{propertyName}", DUPLICATE_RULE_NAME,
 						$"Rule names must be unique per endpoint (case-insensitive). Specifically '{rule.Name}'.");
 					break;
 				}

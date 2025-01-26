@@ -5,6 +5,8 @@ using ValidationAPI.Domain.Entities;
 namespace ValidationAPI.Common.Delegates;
 
 public delegate List<Rule>? RuleValidator(
-	string propertyName, RuleRequest[] rules,
+	string failureKey,
+	string propertyName,
+	RuleRequest[] rules,
 	Dictionary<string, PropertyRequest> properties,
 	Dictionary<string, List<ErrorDetail>> failures);

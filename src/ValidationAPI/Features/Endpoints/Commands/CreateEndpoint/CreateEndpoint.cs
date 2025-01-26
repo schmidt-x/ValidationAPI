@@ -64,7 +64,9 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 				_ => throw new ArgumentOutOfRangeException(nameof(command))
 			};
 			
-			var validatedRules = validator.Invoke(propertyName, property.Rules, command.Properties, failures);
+			var validatedRules = validator.Invoke(
+				$"Properties.{propertyName}", propertyName, property.Rules, command.Properties, failures);
+			
 			if (validatedRules is null) continue;
 			
 			propertiesToSave.Add(new Property

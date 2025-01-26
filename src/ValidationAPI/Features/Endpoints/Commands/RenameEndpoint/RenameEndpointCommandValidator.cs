@@ -15,17 +15,17 @@ public class RenameEndpointCommandValidator : AbstractValidator<RenameEndpointCo
 		
 		RuleFor(x => x.NewName)
 			.NotEmpty()
-			.WithErrorCode(EMPTY_VALUE)
-			.WithMessage("Endpoint is required.");
+			.WithErrorCode(EMPTY_ENDPOINT_NAME)
+			.WithMessage("Endpoint is required.")
 		
-		RuleFor(x => x.NewName)
 			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled)
-			.WithErrorCode(INVALID_CHAR_IN_VALUE)
-			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.");
+			.WithErrorCode(INVALID_ENDPOINT_NAME)
+			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.")
+			.When(x => !string.IsNullOrEmpty(x.NewName), ApplyConditionTo.CurrentValidator)
 		
-		RuleFor(x => x.NewName)
 			.NotEqual(x => x.Endpoint, StringComparer.OrdinalIgnoreCase)
-			.WithErrorCode(DUPLICATE_VALUE)
-			.WithMessage("New name must not be the same as the original name (case-insensitive).");
+			.WithErrorCode(DUPLICATE_ENDPOINT_NAME)
+			.WithMessage("New name must not be the same as the original name (case-insensitive).")
+			.When(x => !string.IsNullOrEmpty(x.NewName), ApplyConditionTo.CurrentValidator);
 	}
 }

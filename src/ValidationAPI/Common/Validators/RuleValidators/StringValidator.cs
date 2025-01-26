@@ -18,16 +18,13 @@ public static partial class RuleValidators
 	private static partial Regex GetPropertyAndOptionRegex();
 	
 	public static List<Rule>? ValidateString(
-		string propertyName, RuleRequest[] rules,
+		string failureKey,
+		string propertyName,
+		RuleRequest[] rules,
 		Dictionary<string, PropertyRequest> properties,
 		Dictionary<string, List<ErrorDetail>> failures)
 	{
 		List<Rule> validatedRules = [];
-		
-		if (rules.Length == 0)
-		{
-			return failures.Count == 0 ? validatedRules : null;
-		}
 		
 		foreach (var rule in rules)
 		{
@@ -52,7 +49,7 @@ public static partial class RuleValidators
 							if (!value.TryGetInt64(out var val))
 							{
 								failures.AddErrorDetail(
-									propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int64).");
+									failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int64).");
 								continue;
 							}
 							if (failures.Count != 0) continue;
@@ -65,7 +62,7 @@ public static partial class RuleValidators
 							ruleRawValue = value.GetString();
 							if (string.IsNullOrEmpty(ruleRawValue))
 							{
-								failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Value is required.");
+								failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Value is required.");
 								continue;
 							}
 							
@@ -73,7 +70,7 @@ public static partial class RuleValidators
 							{
 								if (ruleRawValue.Length < 2) // must be at least 2 characters
 								{
-									failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Empty value.");
+									failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Empty value.");
 									continue;
 								}
 								if (failures.Count != 0) continue;
@@ -86,20 +83,20 @@ public static partial class RuleValidators
 								if (!ruleRawValue.EndsWith('}'))
 								{
 									failures.AddErrorDetail(
-										propertyName, INVALID_RULE_VALUE,
+										failureKey, INVALID_RULE_VALUE,
 										$"[{rule.Name}] Missing closing bracket '}}'. Consider prepending '\\' for the exact comparison.");
 									continue;
 								}
 								if (ruleRawValue.Length < 3)
 								{
-									failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Empty property name.");
+									failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty property name.");
 									continue;
 								}
 								// the value is enclosed with '{}' and contains at least 1 character inside it
 								var match = GetPropertyAndOptionRegex().Match(ruleRawValue);
 								if (!match.Success)
 								{
-									failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid property name.");
+									failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid property name.");
 									continue;
 								}
 								if (match.Groups[2].Success) // option is captured
@@ -113,7 +110,8 @@ public static partial class RuleValidators
 									};
 									if (ruleExtraInfo is null) // invalid option
 									{
-										failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE,
+										failures.AddErrorDetail(
+											failureKey, INVALID_RULE_VALUE,
 											$"[{rule.Name}] Invalid rule-option. Allowed options for 'String' property: " +
 											$"'{RuleOption.ByLength}', " +
 											$"'{RuleOption.CaseIPostfix}'.");
@@ -124,28 +122,28 @@ public static partial class RuleValidators
 								var targetPropertyName = match.Groups[1].Value;
 								if (targetPropertyName.Equals(propertyName, StringComparison.Ordinal))
 								{
-									failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE,
-										$"[{rule.Name}] Rule must not reference its own property.");
+									failures.AddErrorDetail(
+										failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Rule must not reference its own property.");
 									continue;
 								}
 								if (!properties.TryGetValue(targetPropertyName, out var targetProperty))
 								{
 									failures.AddErrorDetail(
-										propertyName, INVALID_RULE_VALUE,
+										failureKey, INVALID_RULE_VALUE,
 										$"[{rule.Name}] Target property '{targetPropertyName}' not found (case-sensitive).");
 									continue;
 								}
 								if (targetProperty.Type != PropertyType.String)
 								{
 									failures.AddErrorDetail(
-										propertyName, INVALID_RULE_VALUE,
+										failureKey, INVALID_RULE_VALUE,
 										$"[{rule.Name}] Target property '{targetPropertyName}' must be of the same type (String).");
 									continue;
 								}
 								if (targetProperty.IsOptional)
 								{
 									failures.AddErrorDetail(
-										propertyName, INVALID_RULE_VALUE,
+										failureKey, INVALID_RULE_VALUE,
 										$"[{rule.Name}] Target property '{targetPropertyName}' must not be optional.");
 									continue;
 								}
@@ -159,9 +157,10 @@ public static partial class RuleValidators
 							{
 								if (ruleRawValue.Length == RuleOption.CaseIPrefix.Length)
 								{
-									failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, 
-										$"[{rule.Name}] No value provided after the case-insensitive option." +
-										$" Consider prepending '\\' for exact comparison.");
+									failures.AddErrorDetail(
+										failureKey, INVALID_RULE_VALUE, 
+										$"[{rule.Name}] No value provided after the case-insensitive option. " +
+										$"Consider prepending '\\' for exact comparison.");
 									continue;
 								}
 								if (failures.Count != 0) continue;
@@ -177,7 +176,7 @@ public static partial class RuleValidators
 						
 						default:
 							failures.AddErrorDetail(
-								propertyName, INVALID_RULE_VALUE,
+								failureKey, INVALID_RULE_VALUE,
 								InvalidValueTypeMessage(rule.Name, "Number, String", value.ValueKind.ToString()));
 							continue;
 					}
@@ -185,21 +184,22 @@ public static partial class RuleValidators
 				
 				case RuleType.Between:
 				case RuleType.Outside:
-					failures.AddErrorDetail(propertyName, INVALID_RULE_TYPE,
-						$"[{rule.Name}] Rule-type is not currently implemented.");
+					failures.AddErrorDetail(
+						failureKey, INVALID_RULE_TYPE, $"[{rule.Name}] Rule-type is not currently implemented.");
 					continue;
 				
 				case RuleType.Regex:
 					if (value.ValueKind != JsonValueKind.String)
 					{
-						failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE,
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE,
 							InvalidValueTypeMessage(rule.Name, "String", value.ValueKind.ToString()));
 						continue;
 					}
 					var regExp = value.GetString();
 					if (string.IsNullOrWhiteSpace(regExp))
 					{
-						failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] Empty Regex expression.");
+						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty Regex expression.");
 						continue;
 					}
 					try
@@ -208,7 +208,7 @@ public static partial class RuleValidators
 					}
 					catch (Exception ex)
 					{
-						failures.AddErrorDetail(propertyName, INVALID_RULE_VALUE, $"[{rule.Name}] {ex.Message}.");
+						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] {ex.Message}.");
 						continue;
 					}
 					if (failures.Count != 0) continue;
