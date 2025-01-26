@@ -137,9 +137,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 	{
 		const string query = """
 			UPDATE endpoints
-			SET name = @NewName,
-			    normalized_name = @NewNormalizedName,
-			    modified_at = now() AT TIME ZONE 'utc'
+			SET name = @NewName, normalized_name = @NewNormalizedName, modified_at = now() AT TIME ZONE 'utc'
 			WHERE id = @EndpointId
 			RETURNING name, description, created_at, modified_at;
 			""";
@@ -157,8 +155,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		const string query = """
 			WITH updated_endpoint AS (
 				UPDATE endpoints
-				SET description = @Description,
-			      modified_at = now() AT TIME ZONE 'utc'
+				SET description = @Description, modified_at = now() AT TIME ZONE 'utc'
 				WHERE id = @EndpointId AND description != @Description
 				RETURNING name, description, created_at, modified_at
 			)
@@ -166,7 +163,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			UNION ALL
 			SELECT name, description, created_at, modified_at
 			FROM endpoints
-			WHERE NOT EXISTS (SELECT 1 FROM updated_endpoint) AND id = @EndpointId;
+			WHERE NOT EXISTS(SELECT 1 FROM updated_endpoint) AND id = @EndpointId;
 			""";
 		
 		var command = new CommandDefinition(query, new { description, endpointId }, Transaction, cancellationToken: ct);

@@ -126,7 +126,7 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		await _db.SaveChangesAsync(ct);
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] New endpoint is created: {Endpoint}.", userId, "CreateEndpoint", endpoint.Name);
+			"[{UserId}] [{Action}] New endpoint {Endpoint} created.", userId, "CreateEndpoint", endpoint.Name);
 		
 		return null;
 	}
