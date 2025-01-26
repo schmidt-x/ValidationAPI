@@ -29,12 +29,12 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return await Connection.ExecuteScalarAsync<int>(command);
 	}
 
-	public async Task<ICollection<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct)
+	public async Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct)
 	{
 		const string query = "select * from properties where endpoint_id = @EndpointId;";
 		
 		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
 		
-		return (ICollection<Property>)await Connection.QueryAsync<Property>(command);
+		return (List<Property>)await Connection.QueryAsync<Property>(command);
 	}
 }

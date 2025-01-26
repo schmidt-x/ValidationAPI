@@ -118,7 +118,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return queryResult.First().ToExpandedResponse(responseProperties);
 	}
 	
-	public async Task<IReadOnlyCollection<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct)
+	public async Task<List<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct)
 	{
 		const string query = """
 			SELECT name, description, created_at, modified_at
@@ -130,7 +130,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		var endpoints = await Connection.QueryAsync<EndpointResponse>(command);
 		
-		return (IReadOnlyCollection<EndpointResponse>)endpoints;
+		return (List<EndpointResponse>)endpoints;
 	}
 	
 	public async Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)

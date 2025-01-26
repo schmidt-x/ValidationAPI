@@ -23,10 +23,12 @@ namespace ValidationAPI.Endpoints;
 
 public class Endpoint : EndpointGroupBase
 {
+	private const string BaseAddress = "api/endpoints";
+	
 	public override void Map(WebApplication app)
 	{
 		var g = app
-			.MapGroup("api/endpoints")
+			.MapGroup(BaseAddress)
 			.WithTags("Endpoint")
 			.RequireAuthorization();
 		
@@ -80,7 +82,7 @@ public class Endpoint : EndpointGroupBase
 		var ex = await handler.Handle(command, ct);
 		
 		return ex is null
-			? Results.Created()
+			? Results.Created($"{BaseAddress}/{request.Endpoint}", null)
 			: Results.UnprocessableEntity(FailResponse.From(ex));
 	}
 	

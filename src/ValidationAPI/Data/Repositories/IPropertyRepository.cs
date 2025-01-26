@@ -8,5 +8,5 @@ namespace ValidationAPI.Data.Repositories;
 public interface IPropertyRepository
 {
 	Task<int> CreateAsync(Property property, CancellationToken ct);
-	Task<ICollection<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct);
+	Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct);
 }

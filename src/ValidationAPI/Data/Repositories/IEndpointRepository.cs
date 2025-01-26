@@ -16,7 +16,7 @@ public interface IEndpointRepository
 	Task<EndpointExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct);
 	
-	Task<IReadOnlyCollection<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct);
+	Task<List<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct);
 	Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
 	Task<EndpointResponse> UpdateDescriptionAsync(string? description, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int endpointId, CancellationToken ct);
