@@ -37,4 +37,22 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		
 		return (List<Property>)await Connection.QueryAsync<Property>(command);
 	}
+	
+	public async Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = "SELECT EXISTS(SELECT 1 FROM properties WHERE (name, endpoint_id) = (@Name, @EndpointId))";
+		
+		var command = new CommandDefinition(query, new { name, endpointId }, Transaction, cancellationToken: ct);
+		
+		return await Connection.ExecuteScalarAsync<bool>(command);
+	}
+	
+	public async Task<List<Property>> GetAllAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "select * from properties where endpoint_id = @EndpointId;";
+		
+		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		
+		return (List<Property>)await Connection.QueryAsync<Property>(command);
+	}
 }

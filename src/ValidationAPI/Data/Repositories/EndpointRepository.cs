@@ -178,4 +178,13 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		await Connection.ExecuteAsync(
 			new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct));
 	}
+	
+	public async Task UpdateModificationDateAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "UPDATE endpoints SET modified_at = NOW() AT TIME ZONE 'utc' WHERE id = @EndpointId;";
+		
+		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		
+		await Connection.ExecuteAsync(command);
+	}
 }

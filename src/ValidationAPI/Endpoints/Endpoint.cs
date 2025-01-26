@@ -74,7 +74,7 @@ public class Endpoint : EndpointGroupBase
 	}
 	
 	public static async Task<IResult> Create(
-		EndpointRequest request,
+		CreateEndpointRequest request,
 		CreateEndpointCommandHandler handler,
 		CancellationToken ct)
 	{

@@ -53,4 +53,13 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		
 		return (List<Rule>)await Connection.QueryAsync<Rule>(command);
 	}
+	
+	public async Task<List<string>> GetAllNamesAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "select normalized_name from rules where endpoint_id = @EndpointId";
+		
+		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		
+		return (List<string>)await Connection.QueryAsync<string>(command); 
+	}
 }
