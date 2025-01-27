@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
+using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Endpoints.Commands.DeleteEndpoint;
 
@@ -9,6 +10,6 @@ public class DeleteEndpointCommandValidator : AbstractValidator<DeleteEndpointCo
 	{
 		RuleFor(x => x.Endpoint)
 			.NotEmpty()
-			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled);
+			.Matches(RegexPatterns.Endpoint, RegexOptions.Compiled);
 	}
 }

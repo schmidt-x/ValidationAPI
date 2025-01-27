@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using FluentValidation;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
+using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Endpoints.Commands.CreateEndpoint;
 
@@ -16,7 +17,7 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 			.WithErrorCode(EMPTY_ENDPOINT_NAME)
 			.WithMessage("Endpoint is required.")
 		
-			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled)
+			.Matches(RegexPatterns.Endpoint, RegexOptions.Compiled)
 			.WithErrorCode(INVALID_ENDPOINT_NAME)
 			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.")
 			.When(x => !string.IsNullOrEmpty(x.Endpoint), ApplyConditionTo.CurrentValidator);
@@ -73,6 +74,6 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 		}
 	}
 
-  [GeneratedRegex(@"^[a-zA-Z_]\w*$")]
+  [GeneratedRegex(RegexPatterns.Property)]
   private static partial Regex PropertyNameRegex();
 }

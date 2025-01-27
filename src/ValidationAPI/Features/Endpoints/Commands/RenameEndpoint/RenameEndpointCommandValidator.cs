@@ -2,6 +2,7 @@
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 using System.Text.RegularExpressions;
 using FluentValidation;
+using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Endpoints.Commands.RenameEndpoint;
 
@@ -11,14 +12,14 @@ public class RenameEndpointCommandValidator : AbstractValidator<RenameEndpointCo
 	{
 		RuleFor(x => x.Endpoint)
 			.NotEmpty()
-			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled);
+			.Matches(RegexPatterns.Endpoint, RegexOptions.Compiled);
 		
 		RuleFor(x => x.NewName)
 			.NotEmpty()
 			.WithErrorCode(EMPTY_ENDPOINT_NAME)
 			.WithMessage("Endpoint is required.")
 		
-			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled)
+			.Matches(RegexPatterns.Endpoint, RegexOptions.Compiled)
 			.WithErrorCode(INVALID_ENDPOINT_NAME)
 			.WithMessage("Endpoint can only contain letters (a-z, A-Z), digits (0-9), hyphens (-), or periods.")
 			.When(x => !string.IsNullOrEmpty(x.NewName), ApplyConditionTo.CurrentValidator)

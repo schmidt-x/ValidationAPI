@@ -4,6 +4,7 @@ using static ValidationAPI.Domain.Constants.ErrorCodes;
 using FluentValidation;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Extensions;
+using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Properties.Commands.CreateProperty;
 
@@ -16,7 +17,7 @@ public class CreatePropertyCommandValidator : AbstractValidator<CreatePropertyCo
 			.WithErrorCode(EMPTY_ENDPOINT_NAME)
 			.WithMessage("Endpoint is required.")
 		
-			.Matches(@"^[a-zA-Z0-9\-.]+$", RegexOptions.Compiled)
+			.Matches(RegexPatterns.Endpoint, RegexOptions.Compiled)
 			.WithErrorCode(INVALID_ENDPOINT_NAME)
 			.WithMessage("Invalid endpoint.")
 			.When(x => !string.IsNullOrEmpty(x.Endpoint), ApplyConditionTo.CurrentValidator);
@@ -32,7 +33,7 @@ public class CreatePropertyCommandValidator : AbstractValidator<CreatePropertyCo
 			.WithMessage("Property name is required.")
 			.When(x => x.Property != null, ApplyConditionTo.CurrentValidator)
 			
-			.Matches(@"^[a-zA-Z_]\w*$", RegexOptions.Compiled)
+			.Matches(RegexPatterns.Property, RegexOptions.Compiled)
 			.WithErrorCode(INVALID_PROPERTY_NAME)
 			.WithMessage(
 				"Property name can only contain letters (a-z, A-Z), underscores (_), or digits (0-9) (except at the beginning).")
