@@ -79,11 +79,13 @@ public static class IServiceCollectionExtensions
 			{
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyOrder>());
 			})
 			.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(opts =>
 			{
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyOrder>());
 			});
 	}
 }

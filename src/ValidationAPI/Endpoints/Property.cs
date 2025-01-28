@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Properties.Commands.CreateProperty;
+using ValidationAPI.Features.Properties.Queries.GetProperties;
 using ValidationAPI.Features.Properties.Queries.GetProperty;
 using ValidationAPI.Infra;
 using ValidationAPI.Requests;
@@ -33,7 +34,11 @@ public class Property : EndpointGroupBase
 		g.MapGet("{property}", Get)
 			.WithSummary("Returns a property (optionally includes Rules)")
 			.Produces<PropertyExpandedResponse>()
-			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapGet("get-all", GetAll)
+			.WithSummary("Returns all properties (optionally scopes to a specific Endpoint)")
+			.Produces<PaginatedList<PropertyMinimalResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
@@ -59,5 +64,22 @@ public class Property : EndpointGroupBase
 		Result<PropertyExpandedResponse> result = await handler.Handle(query, ct);
 		
 		return result.Match(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public static async Task<IResult> GetAll(
+		[AsParameters] GetPropertiesRequest request,
+		GetPropertiesQueryHandler handler,
+		CancellationToken ct)
+	{
+		var query = new GetPropertiesQuery(
+			request.Endpoint,
+			request.PageNumber ?? 1,
+			request.PageSize ?? 50,
+			request.OrderBy,
+			request.Desc ?? false);
+		
+		Result<PaginatedList<PropertyMinimalResponse>> res = await handler.Handle(query, ct);
+		
+		return res.Match(Results.Ok, _ => Results.NotFound());
 	}
 }

@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Models;
+using ValidationAPI.Domain.Enums;
 
 namespace ValidationAPI.Data.Repositories;
 
@@ -13,7 +15,15 @@ public interface IPropertyRepository
 	Task<PropertyExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, int endpointId, bool includeRules, CancellationToken ct);
 	
+	Task<List<PropertyMinimalResponse>> GetAllMinimalResponsesAsync(
+		Guid userId, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct);
+	
+	Task<List<PropertyMinimalResponse>> GetAllMinimalResponsesByEndpointAsync(
+		int endpointId, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct);
+	
 	Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct);
+	Task<int> CountAsync(Guid userId, CancellationToken ct);
+	Task<int> CountAsync(int endpointId, CancellationToken ct);
 	Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<List<Property>> GetAllAsync(int endpointId, CancellationToken ct);
 }
