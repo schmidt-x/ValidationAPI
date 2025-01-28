@@ -62,4 +62,17 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		
 		return (List<string>)await Connection.QueryAsync<string>(command); 
 	}
+	
+	public async Task<string?> GetReferencingRuleNameIfExistsAsync(string propertyName, int endpointId, CancellationToken ct)
+	{
+		const string query = """
+			SELECT name
+			FROM rules
+			WHERE is_relative = true AND endpoint_id = @EndpointId AND value = @PropertyName
+			LIMIT 1;
+			""";
+		
+		var command = new CommandDefinition(query, new { propertyName, endpointId }, Transaction, cancellationToken: ct);
+		return await Connection.ExecuteScalarAsync<string?>(command);
+	}
 }

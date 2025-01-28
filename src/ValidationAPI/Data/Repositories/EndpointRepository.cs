@@ -48,7 +48,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		var command = new CommandDefinition(
 			query, new { NormalizedName = name.ToUpperInvariant(), userId }, Transaction, cancellationToken: ct);
 		
-		return await Connection.QuerySingleOrDefaultAsync<int?>(command);
+		return await Connection.ExecuteScalarAsync<int?>(command);
 	}
 	
 	public async Task<EndpointExpandedResponse?> GetExpandedResponseIfExistsAsync(

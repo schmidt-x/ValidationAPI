@@ -3,9 +3,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Properties.Commands.CreateProperty;
+using ValidationAPI.Features.Properties.Commands.DeleteProperty;
 using ValidationAPI.Features.Properties.Queries.GetProperties;
 using ValidationAPI.Features.Properties.Queries.GetProperty;
 using ValidationAPI.Infra;
@@ -39,6 +41,11 @@ public class Property : EndpointGroupBase
 		g.MapGet("get-all", GetAll)
 			.WithSummary("Returns all properties (optionally scopes to a specific Endpoint)")
 			.Produces<PaginatedList<PropertyMinimalResponse>>()
+			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapDelete("{property}", Delete)
+			.WithSummary("Deletes a property (including Rules)")
+			.Produces(StatusCodes.Status204NoContent)
 			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
@@ -81,5 +88,22 @@ public class Property : EndpointGroupBase
 		Result<PaginatedList<PropertyMinimalResponse>> res = await handler.Handle(query, ct);
 		
 		return res.Match(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public static async Task<IResult> Delete(
+		[FromRoute] string property,
+		[FromQuery] string endpoint,
+		DeletePropertyCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new DeletePropertyCommand(property, endpoint);
+		var ex = await handler.Handle(command, ct);
+		
+		return ex switch
+		{
+			null => Results.NoContent(),
+			NotFoundException => Results.NotFound(),
+			_ => Results.UnprocessableEntity(FailResponse.From(ex))
+		};
 	}
 }

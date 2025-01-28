@@ -145,6 +145,20 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return (List<Property>)await Connection.QueryAsync<Property>(command);
 	}
 	
+	public async Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = "select id from properties where (name, endpoint_id) = (@Name, @EndpointId);"; 
+		var command = NewCommandDefinition(query, new { name, endpointId }, ct);
+		return await Connection.ExecuteScalarAsync<int?>(command);
+	}
+	
+	public async Task DeleteAsync(int id, CancellationToken ct)
+	{
+		const string query = "delete from properties where id = @Id;";
+		await Connection.ExecuteAsync(NewCommandDefinition(query, new { id }, ct));
+	}
+	
+	
 	private async Task<List<PropertyMinimalResponse>> GetAllMinimalResponses(
 		object parameters, bool byEndpoint, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
 	{
