@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ValidationAPI.Common.Models;
+using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Properties.Commands.CreateProperty;
+using ValidationAPI.Features.Properties.Queries.GetProperty;
 using ValidationAPI.Infra;
 using ValidationAPI.Requests;
 using ValidationAPI.Responses;
@@ -24,10 +27,14 @@ public class Property : EndpointGroupBase
 		g.MapPost("", Create)
 			.WithSummary("Appends a new property to an existing endpoint")
 			.Produces(StatusCodes.Status201Created)
-			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized);
 		
 		g.MapGet("{property}", Get)
-			.WithSummary("Returns a property (optionally includes Rules)");
+			.WithSummary("Returns a property (optionally includes Rules)")
+			.Produces<PropertyExpandedResponse>()
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
 	public static async Task<IResult> Create(
@@ -37,15 +44,20 @@ public class Property : EndpointGroupBase
 		var ex = await handler.Handle(command, ct);
 		
 		return ex is null
-			? Results.Created($"{BaseAddress}/{request.Property.Name}", null)
+			? Results.Created($"/{BaseAddress}/{request.Property.Name}?endpoint={request.Endpoint}", null)
 			: Results.UnprocessableEntity(FailResponse.From(ex));
 	}
 	
-	public static IResult Get(
+	public static async Task<IResult> Get(
 		[FromRoute] string property,
+		[FromQuery] string endpoint,
+		GetPropertyQueryHandler handler,
+		CancellationToken ct,
 		[FromQuery] bool includeRules = true)
 	{
-		System.Console.WriteLine(property);	
-		throw new System.NotImplementedException();
+		var query = new GetPropertyQuery(property, endpoint, includeRules);
+		Result<PropertyExpandedResponse> result = await handler.Handle(query, ct);
+		
+		return result.Match(Results.Ok, _ => Results.NotFound());
 	}
 }

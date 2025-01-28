@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using ValidationAPI.Domain.Entities;
+using ValidationAPI.Domain.Models;
+using Rule = ValidationAPI.Domain.Entities.Rule;
 
 namespace ValidationAPI.Data.Repositories;
 
@@ -25,15 +28,68 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		var dParams = new DynamicParameters(property);
 		dParams.Add("@Type", property.Type.ToString());
 		
-		var command = new CommandDefinition(sql, dParams, Transaction, cancellationToken: ct);
-		return await Connection.ExecuteScalarAsync<int>(command);
+		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(sql, dParams, ct));
 	}
 
+	public async Task<PropertyExpandedResponse?> GetExpandedResponseIfExistsAsync(
+		string name, int endpointId, bool includeRules, CancellationToken ct)
+	{
+		string query;
+		CommandDefinition command;
+		var parameters = new { name, endpointId };
+		
+		if (!includeRules)
+		{
+			query = """
+				SELECT e.name AS endpoint, p.name, p.type, p.is_optional
+				FROM properties p
+				INNER JOIN endpoints e ON e.id = p.endpoint_id
+				WHERE (p.name, p.endpoint_id) = (@Name, @EndpointId);
+				""";
+			
+			command = NewCommandDefinition(query, parameters, ct);
+			var property = await Connection.QuerySingleOrDefaultAsync<PropertyExpandedResponse>(command);
+			if (property is null) return null;
+			
+			property.Rules = [];
+			return property;
+		}
+		
+		query = """
+			SELECT e.name,
+			       p.name, p.type, p.is_optional,
+			       r.name, r.type, r.value, r.raw_value, r.value_type, r.error_message
+			FROM properties p
+			INNER JOIN endpoints e ON e.id = p.endpoint_id
+			LEFT JOIN rules r ON r.property_id = p.id
+			WHERE (p.name, p.endpoint_id) = (@Name, @EndpointId);
+			""";
+		
+		command = NewCommandDefinition(query, parameters, ct);
+		
+		var propertyEntries = (List<PropertyExpandedResponse>)
+			await Connection.QueryAsync<string, Property, Rule?, PropertyExpandedResponse>(command, (e, p, r) =>
+				new PropertyExpandedResponse(e, p.Name, p.Type, p.IsOptional)
+				{
+					Rules = r != null ? [ r.ToResponse() ] : []
+				},
+				splitOn: "name");
+		
+		if (propertyEntries.Count == 0) return null;
+		
+		var result = propertyEntries.First();
+		if (propertyEntries.Count > 1)
+		{
+			result.Rules = propertyEntries.Select(p => p.Rules.Single()).ToArray();
+		}
+		return result;
+	}
+	
 	public async Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct)
 	{
 		const string query = "select * from properties where endpoint_id = @EndpointId;";
 		
-		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		var command = NewCommandDefinition(query, new { endpointId }, ct);
 		
 		return (List<Property>)await Connection.QueryAsync<Property>(command);
 	}
@@ -42,7 +98,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	{
 		const string query = "SELECT EXISTS(SELECT 1 FROM properties WHERE (name, endpoint_id) = (@Name, @EndpointId))";
 		
-		var command = new CommandDefinition(query, new { name, endpointId }, Transaction, cancellationToken: ct);
+		var command = NewCommandDefinition(query, new { name, endpointId }, ct);
 		
 		return await Connection.ExecuteScalarAsync<bool>(command);
 	}
@@ -51,8 +107,12 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	{
 		const string query = "select * from properties where endpoint_id = @EndpointId;";
 		
-		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		var command = NewCommandDefinition(query, new { endpointId }, ct);
 		
 		return (List<Property>)await Connection.QueryAsync<Property>(command);
 	}
+	
+	
+	private CommandDefinition NewCommandDefinition(string query, object parameters, CancellationToken ct)
+		=> new(query, parameters, Transaction, cancellationToken: ct);
 }
