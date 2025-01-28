@@ -27,8 +27,7 @@ public class GetPropertyQueryHandler : RequestHandlerBase
 	
 	public async Task<Result<PropertyExpandedResponse>> Handle(GetPropertyQuery query, CancellationToken ct)
 	{
-		var validationResult = _validator.Validate(query);
-		if (!validationResult.IsValid)
+		if (!_validator.Validate(query).IsValid)
 		{
 			return new NotFoundException();
 		}

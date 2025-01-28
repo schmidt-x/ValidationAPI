@@ -48,6 +48,7 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			return new ValidationException(validationResult.Errors);
 		}
 		
+		var timeNow = DateTimeOffset.UtcNow;
 		Dictionary<string, List<ErrorDetail>> failures = [];
 		List<Property> propertiesToSave = [];
 		
@@ -74,6 +75,8 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 				Name = propertyName,
 				Type = property.Type,
 				IsOptional = property.IsOptional,
+				CreatedAt = timeNow,
+				ModifiedAt = timeNow,
 				Rules = validatedRules
 			});
 		}
@@ -88,8 +91,6 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		{
 			return new OperationInvalidException($"Endpoint '{command.Endpoint}' already exists.");
 		}
-		
-		var timeNow = DateTimeOffset.UtcNow;
 		
 		var endpoint = new Endpoint
 		{

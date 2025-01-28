@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using ValidationAPI.Domain.Common;
 using ValidationAPI.Domain.Enums;
 
 namespace ValidationAPI.Domain.Entities;
 
-public class Property
+public class Property : BaseAuditableEntity
 {
 	public int Id { get; init; }
 	public string Name { get; init; } = null!;

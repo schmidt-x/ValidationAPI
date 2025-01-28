@@ -95,11 +95,15 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 		
 		Debug.Assert(failures.Count == 0);
 		
+		var timeNow = DateTimeOffset.UtcNow;
+		
 		var property = new Property
 		{
 			Name = propertyRequest.Name,
 			Type = propertyRequest.Type,
 			IsOptional = propertyRequest.IsOptional,
+			CreatedAt = timeNow,
+			ModifiedAt = timeNow,
 			EndpointId = endpointId.Value,
 			Rules = validatedRules
 		};
@@ -113,7 +117,7 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			{
 				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId.Value, ct);
 			}
-			await _db.Endpoints.UpdateModificationDateAsync(endpointId.Value, ct);
+			await _db.Endpoints.SetModificationDateAsync(timeNow, endpointId.Value, ct);
 		}
 		catch (Exception ex)
 		{

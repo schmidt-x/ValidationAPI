@@ -18,8 +18,8 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	public async Task<int> CreateAsync(Property property, CancellationToken ct)
 	{
 		const string sql = """
-			INSERT INTO properties (name, type, is_optional, endpoint_id)
-			VALUES (@Name, @Type::propertytype, @IsOptional, @EndpointId)
+			INSERT INTO properties (name, type, is_optional, created_at, modified_at, endpoint_id)
+			VALUES (@Name, @Type::propertytype, @IsOptional, @CreatedAt, @ModifiedAt, @EndpointId)
 			RETURNING id;
 		""";
 		
@@ -41,7 +41,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		if (!includeRules)
 		{
 			query = """
-				SELECT e.name AS endpoint, p.name, p.type, p.is_optional
+				SELECT e.name AS endpoint, p.name, p.type, p.is_optional, p.created_at, p.modified_at
 				FROM properties p
 				INNER JOIN endpoints e ON e.id = p.endpoint_id
 				WHERE (p.name, p.endpoint_id) = (@Name, @EndpointId);
@@ -57,7 +57,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		
 		query = """
 			SELECT e.name,
-			       p.name, p.type, p.is_optional,
+			       p.name, p.type, p.is_optional, p.created_at, p.modified_at,
 			       r.name, r.type, r.value, r.raw_value, r.value_type, r.error_message
 			FROM properties p
 			INNER JOIN endpoints e ON e.id = p.endpoint_id
@@ -69,7 +69,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		
 		var propertyEntries = (List<PropertyExpandedResponse>)
 			await Connection.QueryAsync<string, Property, Rule?, PropertyExpandedResponse>(command, (e, p, r) =>
-				new PropertyExpandedResponse(e, p.Name, p.Type, p.IsOptional)
+				new PropertyExpandedResponse(e, p.Name, p.Type, p.IsOptional, p.CreatedAt, p.ModifiedAt)
 				{
 					Rules = r != null ? [ r.ToResponse() ] : []
 				},

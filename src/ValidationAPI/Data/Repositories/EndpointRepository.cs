@@ -72,7 +72,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		
 		query = """
 			SELECT e.id, e.name, e.description, e.created_at, e.modified_at,
-			       p.id, p.name, p.type, p.is_optional,
+			       p.id, p.name, p.type, p.is_optional, p.created_at, p.modified_at,
 			       r.id, r.name, r.type, r.value, r.value_type, r.raw_value, r.error_message, r.property_id
 			FROM endpoints e
 			LEFT JOIN properties p ON p.endpoint_id = e.id
@@ -179,11 +179,11 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct));
 	}
 	
-	public async Task UpdateModificationDateAsync(int endpointId, CancellationToken ct)
+	public async Task SetModificationDateAsync(DateTimeOffset modifiedAt, int endpointId, CancellationToken ct)
 	{
-		const string query = "UPDATE endpoints SET modified_at = NOW() AT TIME ZONE 'utc' WHERE id = @EndpointId;";
+		const string query = "UPDATE endpoints SET modified_at = @ModifiedAt WHERE id = @EndpointId;";
 		
-		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
+		var command = new CommandDefinition(query, new { modifiedAt, endpointId }, Transaction, cancellationToken: ct);
 		
 		await Connection.ExecuteAsync(command);
 	}

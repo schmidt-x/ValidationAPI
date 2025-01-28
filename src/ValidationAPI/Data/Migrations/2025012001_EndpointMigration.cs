@@ -32,6 +32,8 @@ public class EndpointMigration : Migration
 				name        TEXT         NOT NULL,
 				type        PROPERTYTYPE NOT NULL,
 				is_optional BOOL         NOT NULL,
+				created_at  TIMESTAMPTZ  NOT NULL,
+				modified_at TIMESTAMPTZ  NOT NULL,
 				endpoint_id SERIAL       REFERENCES endpoints(id) ON DELETE CASCADE,
 
 				UNIQUE (name, endpoint_id)
