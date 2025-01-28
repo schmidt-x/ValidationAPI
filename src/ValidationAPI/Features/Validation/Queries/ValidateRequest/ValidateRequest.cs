@@ -13,32 +13,32 @@ using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
-using ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint.Validators;
 using ValidationAPI.Features.Infra;
+using ValidationAPI.Features.Validation.Queries.ValidateRequest.Validators;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
-namespace ValidationAPI.Features.Endpoints.Queries.ValidateEndpoint;
+namespace ValidationAPI.Features.Validation.Queries.ValidateRequest;
 
-public record ValidateEndpointQuery(string Endpoint, Dictionary<string, JsonElement> Body);
+public record ValidateRequestQuery(string Endpoint, Dictionary<string, JsonElement> Body);
 
 public record UnvalidatedProperty(int Id, string Name, PropertyType Type, JsonElement Value);
 
-public class ValidateEndpointQueryHandler : RequestHandlerBase
+public class ValidateRequestQueryHandler : RequestHandlerBase
 {
-	private readonly IValidator<ValidateEndpointQuery> _validator;
+	private readonly IValidator<ValidateRequestQuery> _validator;
 	private readonly IRepositoryContext _db;
 	private readonly IUser _user;
 	
-	public ValidateEndpointQueryHandler(
-		IValidator<ValidateEndpointQuery> validator, IUser user, IRepositoryContext db)
+	public ValidateRequestQueryHandler(
+		IValidator<ValidateRequestQuery> validator, IUser user, IRepositoryContext db)
 	{
 		_validator = validator;
 		_user = user;
 		_db = db;
 	}
 	
-	public async Task<Result<ValidationResult>> Handle(ValidateEndpointQuery query, CancellationToken ct)
+	public async Task<Result<ValidationResult>> Handle(ValidateRequestQuery query, CancellationToken ct)
 	{
 		if (!_validator.Validate(query).IsValid)
 		{
