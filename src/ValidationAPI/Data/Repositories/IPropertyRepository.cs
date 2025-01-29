@@ -28,4 +28,5 @@ public interface IPropertyRepository
 	Task<List<Property>> GetAllAsync(int endpointId, CancellationToken ct);
 	Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int id, CancellationToken ct);
+	Task<PropertyMinimalResponse> UpdateNameAsync(string newName, int id, CancellationToken ct);
 }

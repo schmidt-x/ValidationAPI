@@ -46,14 +46,14 @@ public class Endpoint : EndpointGroupBase
 			.Produces<IReadOnlyCollection<EndpointResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
-		g.MapPatch("rename/{endpoint}", Rename)
+		g.MapPatch("{endpoint}/name", Rename)
 			.WithSummary("Renames an endpoint")
 			.Produces<EndpointResponse>()
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
 		
-		g.MapPatch("update-description/{endpoint}", UpdateDescription)
+		g.MapPatch("{endpoint}/description", UpdateDescription)
 			.WithSummary("Updates a description")
 			.Produces<EndpointResponse>()
 			.Produces(StatusCodes.Status401Unauthorized)

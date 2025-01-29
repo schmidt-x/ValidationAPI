@@ -75,4 +75,20 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		var command = new CommandDefinition(query, new { propertyName, endpointId }, Transaction, cancellationToken: ct);
 		return await Connection.ExecuteScalarAsync<string?>(command);
 	}
+	
+	public async Task UpdateReferencingRulesAsync(string oldValue, string newValue, int endpointId, CancellationToken ct)
+	{
+		const string query = """
+			UPDATE rules
+			SET value = @NewValue, raw_value = overlay(raw_value PLACING @NewValue FROM 2 FOR @Length)
+			WHERE endpoint_id = @EndpointId AND is_relative AND value = @OldValue;
+			""";
+		
+		var command = NewCommandDefinition(query, new { oldValue, newValue, oldValue.Length, endpointId }, ct);
+		await Connection.ExecuteAsync(command);
+	}
+	
+	
+	private CommandDefinition NewCommandDefinition(string query, object parameters, CancellationToken ct)
+		=> new(query, parameters, Transaction, cancellationToken: ct);
 }

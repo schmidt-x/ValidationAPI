@@ -8,6 +8,7 @@ using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Properties.Commands.CreateProperty;
 using ValidationAPI.Features.Properties.Commands.DeleteProperty;
+using ValidationAPI.Features.Properties.Commands.UpdateName;
 using ValidationAPI.Features.Properties.Queries.GetProperties;
 using ValidationAPI.Features.Properties.Queries.GetProperty;
 using ValidationAPI.Infra;
@@ -38,7 +39,7 @@ public class Property : EndpointGroupBase
 			.Produces<PropertyExpandedResponse>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
-		g.MapGet("get-all", GetAll)
+		g.MapGet("", GetAll)
 			.WithSummary("Returns all properties (optionally scopes to a specific Endpoint)")
 			.Produces<PaginatedList<PropertyMinimalResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
@@ -47,6 +48,13 @@ public class Property : EndpointGroupBase
 			.WithSummary("Deletes a property (including Rules)")
 			.Produces(StatusCodes.Status204NoContent)
 			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapPatch("{property}/name", UpdateName)
+			.WithSummary("Renames a property")
+			.Produces<PropertyMinimalResponse>()
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized)
+			.DisableAntiforgery(); // TODO: remove
 	}
 	
 	public static async Task<IResult> Create(
@@ -105,5 +113,22 @@ public class Property : EndpointGroupBase
 			NotFoundException => Results.NotFound(),
 			_ => Results.UnprocessableEntity(FailResponse.From(ex))
 		};
+	}
+	
+	public async Task<IResult> UpdateName(
+		[AsParameters] RenamePropertyRequest request,
+		UpdateNameCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new UpdateNameCommand(request.Property, request.Endpoint, request.NewName);
+		Result<PropertyMinimalResponse> result = await handler.Handle(command, ct);
+		
+		return result.Match(
+			Results.Ok,
+			ex => ex switch
+			{
+				NotFoundException => Results.NotFound(),
+				_ => Results.UnprocessableEntity(FailResponse.From(ex))
+			});
 	}
 }

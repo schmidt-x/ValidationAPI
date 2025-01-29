@@ -65,9 +65,7 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.Error(
-				"[{UserId}] [{Action}] [{EndpointId}] Endpoint renaming has failed: {ErrorMessage}",
-				userId, "RenameEndpoint", endpointId.Value, ex.Message);
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "RenameEndpoint", ex.Message);
 			throw;
 		}
 		

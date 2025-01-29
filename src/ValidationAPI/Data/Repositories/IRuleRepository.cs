@@ -11,4 +11,5 @@ public interface IRuleRepository
 	Task<List<Rule>> GetAllByPropertyIdAsync(IEnumerable<int> propertyIds, CancellationToken ct);
 	Task<List<string>> GetAllNamesAsync(int endpointId, CancellationToken ct);
 	Task<string?> GetReferencingRuleNameIfExistsAsync(string propertyName, int propertyId, CancellationToken ct);
+	Task UpdateReferencingRulesAsync(string oldValue, string newValue, int endpointId, CancellationToken ct);
 }

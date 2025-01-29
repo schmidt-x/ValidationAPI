@@ -63,7 +63,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 				if (!dbProperty.IsOptional)
 				{
 					failures.AddErrorDetail(dbProperty.Name, PROPERTY_NOT_PRESENT,
-						"Property is not present. Consider making it optional.");
+						$"Property is not present (type '{dbProperty.Type}'). Consider making it optional.");
 				}
 				continue;
 			}
@@ -75,7 +75,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 					if (requestValue.ValueKind != JsonValueKind.Number)
 					{
 						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE, 
-							$"Expected property type is Number; got: {requestValue.ValueKind}.");
+							$"Expected value kind is 'Number'; got: '{requestValue.ValueKind}'.");
 						continue;
 					}
 					break;
@@ -86,7 +86,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 					if (requestValue.ValueKind != JsonValueKind.String)
 					{
 						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE,
-							$"Expected property type is String; got: {requestValue.ValueKind}.");
+							$"Expected value kind is 'String'; got: '{requestValue.ValueKind}'.");
 						continue;
 					}
 					break;

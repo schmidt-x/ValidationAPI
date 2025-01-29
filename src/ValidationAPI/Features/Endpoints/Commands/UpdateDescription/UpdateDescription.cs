@@ -52,15 +52,13 @@ public class UpdateDescriptionCommandHandler : RequestHandlerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.Error(
-				"[{UserId}] [{Action}] [{EndpointId}] Description update failed: {ErrorMessage}",
-				userId, "UpdateDescription", endpointId.Value, ex.Message);
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "EndpointUpdateDescription", ex.Message);
 			throw;
 		}
 		
 		// TODO: should I include the updated description?
 		_logger.Information(
-				"[{UserId}] [{Action}] [{EndpointId}] Description updated.", userId, "UpdateDescription", endpointId.Value);
+			"[{UserId}] [{Action}] [{EndpointId}] Description updated.", userId, "EndpointUpdateDescription", endpointId.Value);
 		
 		return endpoint;
 	}

@@ -158,6 +158,25 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		await Connection.ExecuteAsync(NewCommandDefinition(query, new { id }, ct));
 	}
 	
+	public async Task<PropertyMinimalResponse> UpdateNameAsync(string newName, int id, CancellationToken ct)
+	{
+		const string query = """
+			WITH updated_property AS (
+				UPDATE properties
+				SET name = @NewName, modified_at = now() AT TIME ZONE 'utc'
+				WHERE id = @Id
+				RETURNING *
+			)
+			SELECT p.name, p.type, p.is_optional, p.created_at, p.modified_at,
+			       e.name AS endpoint
+			FROM updated_property p
+			INNER JOIN endpoints e ON e.id = p.endpoint_id;
+			""";
+		
+		var command = NewCommandDefinition(query, new { newName, id }, ct);
+		return await Connection.QuerySingleAsync<PropertyMinimalResponse>(command);
+	}
+	
 	
 	private async Task<List<PropertyMinimalResponse>> GetAllMinimalResponses(
 		object parameters, bool byEndpoint, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
