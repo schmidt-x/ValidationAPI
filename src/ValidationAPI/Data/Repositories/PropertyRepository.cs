@@ -127,7 +127,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(query, new { endpointId }, ct));
 	}
 	
-	public async Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct)
+	public async Task<bool> ExistsAsync(string name, int endpointId, CancellationToken ct)
 	{
 		const string query = "SELECT EXISTS(SELECT 1 FROM properties WHERE (name, endpoint_id) = (@Name, @EndpointId))";
 		

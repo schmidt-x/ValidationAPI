@@ -56,6 +56,11 @@ public class UpdateNameCommandHandler : RequestHandlerBase
 			return new NotFoundException();
 		}
 		
+		if (await _db.Properties.ExistsAsync(command.NewName, endpointId.Value, ct))
+		{
+			return new OperationInvalidException($"Property with the name '{command.NewName}' already exists (case-sensitive).");
+		}
+		
 		PropertyMinimalResponse updatedProperty;
 		await _db.BeginTransactionAsync(ct);
 		
@@ -74,8 +79,8 @@ public class UpdateNameCommandHandler : RequestHandlerBase
 		await _db.SaveChangesAsync(ct);
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] [{EndpointId}] " + $"'{command.Property}' -> '{command.NewName}'",
-			userId, "PropertyUpdateName", endpointId.Value);
+			"[{UserId}] [{Action}] [{PropertyId}] " + $"'{command.Property}' -> '{command.NewName}'",
+			userId, "PropertyUpdateName", propertyId.Value);
 		
 		return updatedProperty;
 	}

@@ -62,16 +62,13 @@ public class DeletePropertyCommandHandler : RequestHandlerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.Error(
-				"[{UserId}] [{Action}] [{EndpointId}] Failed to delete a property: {ErrorMessage}",
-				userId, "DeleteProperty", endpointId.Value, ex.Message);
-			
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "DeleteProperty", ex.Message);
 			throw;
 		}
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] [{EndpointId}] Property {PropertyName} deleted.",
-			userId, "DeleteProperty", endpointId.Value, command.Property);
+			"[{UserId}] [{Action}] [{PropertyId}] Property {PropertyName} deleted.",
+			userId, "DeleteProperty", propertyId.Value, command.Property);
 		
 		return null;
 	}

@@ -24,7 +24,7 @@ public interface IPropertyRepository
 	Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct);
 	Task<int> CountAsync(Guid userId, CancellationToken ct);
 	Task<int> CountAsync(int endpointId, CancellationToken ct);
-	Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct);
+	Task<bool> ExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<List<Property>> GetAllAsync(int endpointId, CancellationToken ct);
 	Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int id, CancellationToken ct);

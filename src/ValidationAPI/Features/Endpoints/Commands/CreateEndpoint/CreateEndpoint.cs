@@ -89,7 +89,8 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		var userId = _user.Id();
 		if (await _db.Endpoints.ExistsAsync(command.Endpoint, userId, ct))
 		{
-			return new OperationInvalidException($"Endpoint '{command.Endpoint}' already exists.");
+			return new OperationInvalidException(
+				$"Endpoint with the name '{command.Endpoint}' already exists (case-insensitive).");
 		}
 		
 		var endpoint = new Endpoint
@@ -102,11 +103,12 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			UserId = userId
 		};
 		
+		int endpointId;
 		await _db.BeginTransactionAsync(ct);
 		
 		try
 		{
-			var endpointId = await _db.Endpoints.CreateAsync(endpoint, ct);
+			endpointId = await _db.Endpoints.CreateAsync(endpoint, ct);
 			
 			foreach (var property in propertiesToSave)
 			{
@@ -119,15 +121,15 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		catch (Exception ex)
 		{
 			await _db.UndoChangesAsync();
-			_logger.Error(
-				"[{UserId}] [{Action}] Failed to create an endpoint: {ErrorMessage}", userId, "CreateEndpoint", ex.Message);
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "CreateEndpoint", ex.Message);
 			throw;
 		}
 		
 		await _db.SaveChangesAsync(ct);
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] New endpoint {Endpoint} created.", userId, "CreateEndpoint", endpoint.Name);
+			"[{UserId}] [{Action}] [{EndpointId}] New endpoint {EndpointName} created.",
+			userId, "CreateEndpoint", endpointId, endpoint.Name);
 		
 		return null;
 	}

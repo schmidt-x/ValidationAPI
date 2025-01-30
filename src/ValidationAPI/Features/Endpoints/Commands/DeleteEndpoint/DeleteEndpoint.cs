@@ -49,14 +49,13 @@ public class DeleteEndpointCommandHandler : RequestHandlerBase
 		}
 		catch (Exception ex)
 		{
-			_logger.Error(
-				"[{UserId}] [{Action}] [{EndpointId}] Failed to delete an endpoint: {ErrorMessage}",
-				userId, "DeleteEndpoint", endpointId.Value, ex.Message);
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "DeleteEndpoint", ex.Message);
 			throw;
 		}
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] [{EndpointId}] Endpoint is deleted.", userId, "DeleteEndpoint", endpointId.Value);
+			"[{UserId}] [{Action}] [{EndpointId}] Endpoint {EndpointName} deleted.",
+			userId, "DeleteEndpoint", endpointId.Value, command.Endpoint);
 		
 		return null;
 	}

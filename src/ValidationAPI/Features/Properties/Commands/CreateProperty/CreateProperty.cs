@@ -55,9 +55,10 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			return new OperationInvalidException($"Endpoint '{endpointName}' does not exist.");
 		}
 		
-		if (await _db.Properties.NameExistsAsync(propertyRequest.Name, endpointId.Value, ct))
+		if (await _db.Properties.ExistsAsync(propertyRequest.Name, endpointId.Value, ct))
 		{
-			return new OperationInvalidException($"Property with name '{propertyRequest.Name}' already exists.");
+			return new OperationInvalidException(
+				$"Property with the name '{propertyRequest.Name}' already exists (case-sensitive).");
 		}
 		
 		var dbRuleNames = (await _db.Rules.GetAllNamesAsync(endpointId.Value, ct)).ToHashSet();
@@ -108,11 +109,12 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			Rules = validatedRules
 		};
 		
+		int propertyId;
 		await _db.BeginTransactionAsync(ct);
 		
 		try
 		{
-			var propertyId = await _db.Properties.CreateAsync(property, ct);
+			propertyId = await _db.Properties.CreateAsync(property, ct);
 			if (property.Rules.Count != 0)
 			{
 				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId.Value, ct);
@@ -122,17 +124,15 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 		catch (Exception ex)
 		{
 			await _db.UndoChangesAsync();
-			_logger.Error(
-				"[{UserId}] [{Action}] [{EndpointId}] Failed at creating property: {ErrorMessage}", // TODO:
-				userId, "CreateProperty", endpointId.Value, ex.Message);
+			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "CreateProperty", ex.Message);
 			throw;
 		}
 		
 		await _db.SaveChangesAsync(ct);
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] [{EndpointId}] New property {PropertyName} created.", // TODO:
-			userId, "CreateProperty", endpointId.Value, property.Name);
+			"[{UserId}] [{Action}] [{PropertyId}] New property {PropertyName} created.",
+			userId, "CreateProperty", propertyId, property.Name);
 		
 		return null;
 	}
