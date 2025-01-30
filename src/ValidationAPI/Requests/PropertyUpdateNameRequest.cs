@@ -2,7 +2,7 @@
 
 namespace ValidationAPI.Requests;
 
-public class RenamePropertyRequest
+public class PropertyUpdateNameRequest
 {
 	[FromRoute] public string Property { get; init; } = null!;
 	[FromQuery] public string Endpoint { get; init; } = null!;

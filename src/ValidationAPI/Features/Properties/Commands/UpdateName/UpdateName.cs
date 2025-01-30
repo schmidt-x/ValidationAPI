@@ -66,7 +66,7 @@ public class UpdateNameCommandHandler : RequestHandlerBase
 		
 		try
 		{
-			updatedProperty = await _db.Properties.UpdateNameAsync(command.NewName, propertyId.Value, ct);
+			updatedProperty = await _db.Properties.SetNameAsync(command.NewName, propertyId.Value, ct);
 			await _db.Rules.UpdateReferencingRulesAsync(command.Property, command.NewName, endpointId.Value, ct);
 		}
 		catch (Exception ex)

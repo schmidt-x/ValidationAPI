@@ -33,6 +33,14 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(sql, dParams, ct));
 	}
 
+	public async Task<Property?> GetIfExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = "select * from properties where (name, endpoint_id) = (@Name, @EndpointId)";
+		
+		var command = NewCommandDefinition(query, new { name, endpointId }, ct);
+		return await Connection.QueryFirstOrDefaultAsync<Property>(command);
+	}
+	
 	public async Task<PropertyExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string name, int endpointId, bool includeRules, CancellationToken ct)
 	{
@@ -158,12 +166,23 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		await Connection.ExecuteAsync(NewCommandDefinition(query, new { id }, ct));
 	}
 	
-	public async Task<PropertyMinimalResponse> UpdateNameAsync(string newName, int id, CancellationToken ct)
+	public Task<PropertyMinimalResponse> SetNameAsync(string newName, int id, CancellationToken ct)
 	{
-		const string query = """
+		return SetColumn("name = @NewName", new { newName, id }, ct);
+	}
+	
+	public Task<PropertyMinimalResponse> SetOptionalityAsync(bool isOptional, int id, CancellationToken ct)
+	{
+		return SetColumn("is_optional = @IsOptional", new { isOptional, id }, ct);
+	}
+	
+	
+	private async Task<PropertyMinimalResponse> SetColumn(string column, object parameters, CancellationToken ct)
+	{
+		string query = $"""
 			WITH updated_property AS (
 				UPDATE properties
-				SET name = @NewName, modified_at = now() AT TIME ZONE 'utc'
+				SET {column}, modified_at = now() AT TIME ZONE 'utc'
 				WHERE id = @Id
 				RETURNING *
 			)
@@ -173,10 +192,9 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 			INNER JOIN endpoints e ON e.id = p.endpoint_id;
 			""";
 		
-		var command = NewCommandDefinition(query, new { newName, id }, ct);
+		var command = NewCommandDefinition(query, parameters, ct);
 		return await Connection.QuerySingleAsync<PropertyMinimalResponse>(command);
 	}
-	
 	
 	private async Task<List<PropertyMinimalResponse>> GetAllMinimalResponses(
 		object parameters, bool byEndpoint, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)

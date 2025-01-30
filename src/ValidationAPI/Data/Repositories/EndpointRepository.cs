@@ -77,7 +77,8 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			FROM endpoints e
 			LEFT JOIN properties p ON p.endpoint_id = e.id
 			LEFT JOIN rules r ON r.property_id = p.id
-			WHERE (e.normalized_name, e.user_id) = (@NormalizedName, @UserId);
+			WHERE (e.normalized_name, e.user_id) = (@NormalizedName, @UserId)
+			ORDER BY p.id;
 			""";
 		
 		command = new CommandDefinition(

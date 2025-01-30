@@ -9,6 +9,7 @@ using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Properties.Commands.CreateProperty;
 using ValidationAPI.Features.Properties.Commands.DeleteProperty;
 using ValidationAPI.Features.Properties.Commands.UpdateName;
+using ValidationAPI.Features.Properties.Commands.UpdateOptionality;
 using ValidationAPI.Features.Properties.Queries.GetProperties;
 using ValidationAPI.Features.Properties.Queries.GetProperty;
 using ValidationAPI.Infra;
@@ -55,6 +56,13 @@ public class Property : EndpointGroupBase
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
+		
+		g.MapPatch("{property}/is-optional", UpdateOptionality)
+			.WithSummary("Makes a property optional or required")
+			.Produces<PropertyMinimalResponse>()
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.Produces(StatusCodes.Status401Unauthorized)
+			.DisableAntiforgery(); // TODO: remove
 	}
 	
 	public static async Task<IResult> Create(
@@ -82,9 +90,7 @@ public class Property : EndpointGroupBase
 	}
 	
 	public static async Task<IResult> GetAll(
-		[AsParameters] GetPropertiesRequest request,
-		GetPropertiesQueryHandler handler,
-		CancellationToken ct)
+		[AsParameters] GetPropertiesRequest request, GetPropertiesQueryHandler handler, CancellationToken ct)
 	{
 		var query = new GetPropertiesQuery(
 			request.Endpoint,
@@ -99,10 +105,7 @@ public class Property : EndpointGroupBase
 	}
 	
 	public static async Task<IResult> Delete(
-		[FromRoute] string property,
-		[FromQuery] string endpoint,
-		DeletePropertyCommandHandler handler,
-		CancellationToken ct)
+		[FromRoute] string property, [FromQuery] string endpoint, DeletePropertyCommandHandler handler, CancellationToken ct)
 	{
 		var command = new DeletePropertyCommand(property, endpoint);
 		var ex = await handler.Handle(command, ct);
@@ -116,11 +119,26 @@ public class Property : EndpointGroupBase
 	}
 	
 	public async Task<IResult> UpdateName(
-		[AsParameters] RenamePropertyRequest request,
-		UpdateNameCommandHandler handler,
-		CancellationToken ct)
+		[AsParameters] PropertyUpdateNameRequest request, UpdateNameCommandHandler handler, CancellationToken ct)
 	{
 		var command = new UpdateNameCommand(request.Property, request.Endpoint, request.NewName);
+		Result<PropertyMinimalResponse> result = await handler.Handle(command, ct);
+		
+		return result.Match(
+			Results.Ok,
+			ex => ex switch
+			{
+				NotFoundException => Results.NotFound(),
+				_ => Results.UnprocessableEntity(FailResponse.From(ex))
+			});
+	}
+	
+	public async Task<IResult> UpdateOptionality(
+		[AsParameters] PropertyUpdateOptionalityRequest request,
+		UpdateOptionalityCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new UpdateOptionalityCommand(request.Property, request.Endpoint, request.IsOptional);
 		Result<PropertyMinimalResponse> result = await handler.Handle(command, ct);
 		
 		return result.Match(
