@@ -108,13 +108,13 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	public Task<List<PropertyMinimalResponse>> GetAllMinimalResponsesAsync(
 		Guid userId, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
 	{
-		return GetAllMinimalResponses(new { userId }, false, take, offset, orderBy, desc, ct);
+		return GetAllMinimalResponses("e.user_id = @UserId", new { userId }, take, offset, orderBy, desc, ct);
 	}
 	
 	public Task<List<PropertyMinimalResponse>> GetAllMinimalResponsesByEndpointAsync(
 		int endpointId, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
 	{
-		return GetAllMinimalResponses(new { endpointId }, true, take, offset, orderBy, desc, ct);
+		return GetAllMinimalResponses("e.id = @EndpointId", new { endpointId }, take, offset, orderBy, desc, ct);
 	}
 	
 	public async Task<int> CountAsync(Guid userId, CancellationToken ct)
@@ -197,14 +197,14 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	}
 	
 	private async Task<List<PropertyMinimalResponse>> GetAllMinimalResponses(
-		object parameters, bool byEndpoint, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
+		string condition, object parameters, int? take, int? offset, PropertyOrder? orderBy, bool desc, CancellationToken ct)
 	{
 		string query = $"""
 			SELECT p.name, p.type, p.is_optional, p.created_at, p.modified_at,
 			       e.name AS endpoint
 			FROM properties p
 			INNER JOIN endpoints e ON e.id = p.endpoint_id
-			WHERE {(byEndpoint ? "e.id = @EndpointId" : "e.user_id = @UserId")}
+			WHERE {condition}
 			ORDER BY {orderBy?.ToDbName() ?? "p.id"} {(desc ? "DESC" : "ASC")}
 			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0};
 			""";

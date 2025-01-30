@@ -56,15 +56,21 @@ public class DeletePropertyCommandHandler : RequestHandlerBase
 				$"Unable to delete. The property is referenced by at least one rule, specifically '{ruleName}'.");
 		}
 		
+		await _db.BeginTransactionAsync(ct);
+		
 		try
 		{
 			await _db.Properties.DeleteAsync(propertyId.Value, ct);
+			await _db.Endpoints.SetModificationDateAsync(DateTimeOffset.UtcNow, endpointId.Value, ct);
 		}
 		catch (Exception ex)
 		{
+			await _db.UndoChangesAsync();
 			_logger.Error("[{UserId}] [{Action}] {ErrorMessage}", userId, "DeleteProperty", ex.Message);
 			throw;
 		}
+		
+		await _db.SaveChangesAsync(ct);
 		
 		_logger.Information(
 			"[{UserId}] [{Action}] [{PropertyId}] Property {PropertyName} deleted.",

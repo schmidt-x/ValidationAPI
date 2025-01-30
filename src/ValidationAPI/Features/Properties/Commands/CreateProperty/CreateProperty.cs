@@ -66,7 +66,7 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 		var duplicateRule = propertyRequest.Rules.FirstOrDefault(r => dbRuleNames.Contains(r.Name.ToUpperInvariant()));
 		if (duplicateRule != null)
 		{
-			return new OperationInvalidException($"Rule with name '{duplicateRule.Name}' already exists.");
+			return new OperationInvalidException($"Rule with the name '{duplicateRule.Name}' already exists.");
 		}
 		
 		RuleValidator validator = propertyRequest.Type switch
