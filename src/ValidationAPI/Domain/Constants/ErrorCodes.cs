@@ -22,6 +22,7 @@ public static class ErrorCodes
 	public const string VALUE_MISSING_SYMBOL    = nameof(VALUE_MISSING_SYMBOL);
 	
 	// Rules
+	public const string EMPTY_RULES         = nameof(EMPTY_RULES);
 	public const string EMPTY_RULE_VALUE    = nameof(EMPTY_RULE_VALUE);
 	public const string INVALID_RULE_VALUE  = nameof(INVALID_RULE_VALUE);
 	public const string INVALID_RULE_TYPE   = nameof(INVALID_RULE_TYPE);

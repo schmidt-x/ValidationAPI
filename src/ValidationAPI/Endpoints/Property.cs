@@ -32,8 +32,8 @@ public class Property : EndpointGroupBase
 		g.MapPost("", Create)
 			.WithSummary("Appends a new property to an existing endpoint")
 			.Produces(StatusCodes.Status201Created)
-			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
-			.Produces(StatusCodes.Status401Unauthorized);
+			.Produces(StatusCodes.Status401Unauthorized)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
 		
 		g.MapGet("{property}", Get)
 			.WithSummary("Returns a property (optionally includes Rules)")
@@ -53,15 +53,15 @@ public class Property : EndpointGroupBase
 		g.MapPatch("{property}/name", UpdateName)
 			.WithSummary("Renames a property")
 			.Produces<PropertyMinimalResponse>()
-			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.Produces(StatusCodes.Status401Unauthorized)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.DisableAntiforgery(); // TODO: remove
 		
 		g.MapPatch("{property}/is-optional", UpdateOptionality)
 			.WithSummary("Makes a property optional or required")
 			.Produces<PropertyMinimalResponse>()
-			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.Produces(StatusCodes.Status401Unauthorized)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
 			.DisableAntiforgery(); // TODO: remove
 	}
 	
