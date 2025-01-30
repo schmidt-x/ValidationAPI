@@ -80,7 +80,7 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			_ => throw new ArgumentOutOfRangeException(nameof(command))
 		};
 		
-		var dbProperties = (await _db.Properties.GetAllAsync(endpointId.Value, ct))
+		var dbProperties = (await _db.Properties.GetAllByEndpointIdAsync(endpointId.Value, ct))
 			.ToDictionary(p => p.Name, p => new PropertyRequest(p.Type, p.IsOptional));
 		
 		Dictionary<string, List<ErrorDetail>> failures = [];

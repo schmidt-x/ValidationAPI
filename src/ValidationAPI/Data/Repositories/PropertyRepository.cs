@@ -35,7 +35,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 
 	public async Task<Property?> GetIfExistsAsync(string name, int endpointId, CancellationToken ct)
 	{
-		const string query = "select * from properties where (name, endpoint_id) = (@Name, @EndpointId)";
+		const string query = "SELECT * FROM properties WHERE (name, endpoint_id) = (@Name, @EndpointId)";
 		
 		var command = NewCommandDefinition(query, new { name, endpointId }, ct);
 		return await Connection.QueryFirstOrDefaultAsync<Property>(command);
@@ -98,7 +98,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	
 	public async Task<List<Property>> GetAllByEndpointIdAsync(int endpointId, CancellationToken ct)
 	{
-		const string query = "select * from properties where endpoint_id = @EndpointId;";
+		const string query = "SELECT * FROM properties WHERE endpoint_id = @EndpointId ORDER BY id;";
 		
 		var command = NewCommandDefinition(query, new { endpointId }, ct);
 		
@@ -131,7 +131,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	
 	public async Task<int> CountAsync(int endpointId, CancellationToken ct)
 	{
-		const string query = "select count(*) from properties where endpoint_id = @EndpointId;";
+		const string query = "SELECT count(*) FROM properties WHERE endpoint_id = @EndpointId;";
 		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(query, new { endpointId }, ct));
 	}
 	
@@ -144,25 +144,17 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return await Connection.ExecuteScalarAsync<bool>(command);
 	}
 	
-	public async Task<List<Property>> GetAllAsync(int endpointId, CancellationToken ct)
-	{
-		const string query = "select * from properties where endpoint_id = @EndpointId;";
-		
-		var command = NewCommandDefinition(query, new { endpointId }, ct);
-		
-		return (List<Property>)await Connection.QueryAsync<Property>(command);
-	}
-	
 	public async Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct)
 	{
-		const string query = "select id from properties where (name, endpoint_id) = (@Name, @EndpointId);"; 
+		const string query = "SELECT id FROM properties WHERE (name, endpoint_id) = (@Name, @EndpointId);";
+		
 		var command = NewCommandDefinition(query, new { name, endpointId }, ct);
 		return await Connection.ExecuteScalarAsync<int?>(command);
 	}
 	
 	public async Task DeleteAsync(int id, CancellationToken ct)
 	{
-		const string query = "delete from properties where id = @Id;";
+		const string query = "DELETE FROM properties WHERE id = @Id;";
 		await Connection.ExecuteAsync(NewCommandDefinition(query, new { id }, ct));
 	}
 	
