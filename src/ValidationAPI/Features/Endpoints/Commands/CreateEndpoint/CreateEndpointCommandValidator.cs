@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using FluentValidation;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
+using ValidationAPI.Common.Validators;
 using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Endpoints.Commands.CreateEndpoint;
@@ -24,7 +25,7 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 		
 		RuleFor(x => x.Properties)
 			.NotEmpty()
-			.WithErrorCode(EMPTY_PROPERTY)
+			.WithErrorCode(EMPTY_PROPERTIES)
 			.WithMessage("At least one property is required.")
 			.Custom(Validator)
 			.When(x => x.Properties is { Count: > 0 }, ApplyConditionTo.CurrentValidator);
@@ -33,7 +34,7 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 	private static void Validator(
 		Dictionary<string, PropertyRequest> properties, ValidationContext<CreateEndpointCommand> context)
 	{
-		HashSet<string> ruleNames = [];
+		var ruleValidator = new RuleRequestValidator();
 					
 		foreach ((string propertyName, PropertyRequest property) in properties)
 		{
@@ -53,24 +54,7 @@ public partial class CreateEndpointCommandValidator : AbstractValidator<CreateEn
 			
 			// TODO: validate property length?
 			
-			foreach (var rule in property.Rules) // once any rule-error is detected, skip to the next property
-			{
-				if (string.IsNullOrWhiteSpace(rule.Name))
-				{
-					context.AddFailure($"Properties.{propertyName}", EMPTY_RULE_NAME, "Rule names must not be empty.");
-					break;
-				}
-				
-				// TODO: validate rule name's length?
-				
-				if (!ruleNames.Add(rule.Name.ToUpperInvariant()))
-				{
-					context.AddFailure(
-						$"Properties.{propertyName}", DUPLICATE_RULE_NAME,
-						$"Rule names must be unique per endpoint (case-insensitive). Specifically '{rule.Name}'.");
-					break;
-				}
-			}
+			ruleValidator.Validate($"Properties.{propertyName}", property.Rules, context);
 		}
 	}
 

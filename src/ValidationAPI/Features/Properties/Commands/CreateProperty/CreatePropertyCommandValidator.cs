@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 using FluentValidation;
-using ValidationAPI.Common.Models;
-using ValidationAPI.Common.Extensions;
+using ValidationAPI.Common.Validators;
 using ValidationAPI.Domain.Constants;
 
 namespace ValidationAPI.Features.Properties.Commands.CreateProperty;
@@ -24,7 +22,7 @@ public class CreatePropertyCommandValidator : AbstractValidator<CreatePropertyCo
 		
 		RuleFor(x => x.Property)
 			.NotNull()
-			.WithErrorCode(EMPTY_PROPERTY)
+			.WithErrorCode(EMPTY_PROPERTIES)
 			.WithMessage("Property is required.");
 			
 		RuleFor(x => x.Property.Name)
@@ -40,32 +38,7 @@ public class CreatePropertyCommandValidator : AbstractValidator<CreatePropertyCo
 			.When(x => x.Property is { Name.Length: > 0 }, ApplyConditionTo.CurrentValidator);
 		
 		RuleFor(x => x.Property.Rules)
-			.Custom(Validator)
+			.Custom((rules, context) => new RuleRequestValidator().Validate("Property.Rules", rules, context))
 			.When(x => x.Property is { Rules.Length: > 0 }, ApplyConditionTo.CurrentValidator);
 	}
-	
-	private static void Validator(RuleRequest[] rules, ValidationContext<CreatePropertyCommand> context)
-	{
-		const string failureKey = "Property.Rules";
-		HashSet<string> ruleNames = [];
-		
-		foreach (var rule in rules)
-		{
-			if (string.IsNullOrWhiteSpace(rule.Name))
-			{
-				context.AddFailure(failureKey, EMPTY_RULE_NAME, "Rule names must not be empty.");
-				break;
-			}
-			
-			// TODO: validate rule name's length?
-			
-			if (!ruleNames.Add(rule.Name.ToUpperInvariant()))
-			{
-				context.AddFailure(failureKey, DUPLICATE_RULE_NAME,
-					$"Rule names must be unique per endpoint (case-insensitive). Specifically '{rule.Name}'.");
-				break;
-			}
-		}
-	}
 }
-

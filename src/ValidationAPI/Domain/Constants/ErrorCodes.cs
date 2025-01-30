@@ -29,7 +29,7 @@ public static class ErrorCodes
 	public const string DUPLICATE_RULE_NAME = nameof(DUPLICATE_RULE_NAME);
 	
 	// Properties
-	public const string EMPTY_PROPERTY          = nameof(EMPTY_PROPERTY);
+	public const string EMPTY_PROPERTIES          = nameof(EMPTY_PROPERTIES);
 	public const string PROPERTY_NOT_PRESENT    = nameof(PROPERTY_NOT_PRESENT);
 	public const string INVALID_PROPERTY_TYPE   = nameof(INVALID_PROPERTY_TYPE);
 	public const string EMPTY_PROPERTY_NAME     = nameof(EMPTY_PROPERTY_NAME);
