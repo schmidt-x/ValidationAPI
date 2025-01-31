@@ -168,6 +168,13 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		return SetColumn("is_optional = @IsOptional", new { isOptional, id }, ct);
 	}
 	
+	public async Task SetModificationDateAsync(DateTimeOffset modifiedAt, int id, CancellationToken ct)
+	{
+		const string query = "UPDATE properties SET modified_at = @ModifiedAt WHERE id = @Id";
+		var command = NewCommandDefinition(query, new { modifiedAt, id }, ct);
+		await Connection.ExecuteAsync(command);
+	}
+	
 	
 	private async Task<PropertyMinimalResponse> SetColumn(string column, object parameters, CancellationToken ct)
 	{

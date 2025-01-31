@@ -30,4 +30,5 @@ public interface IPropertyRepository
 	Task DeleteAsync(int id, CancellationToken ct);
 	Task<PropertyMinimalResponse> SetNameAsync(string newName, int id, CancellationToken ct);
 	Task<PropertyMinimalResponse> SetOptionalityAsync(bool isOptional, int id, CancellationToken ct);
+	Task SetModificationDateAsync(DateTimeOffset modifiedAt, int id, CancellationToken ct);
 }

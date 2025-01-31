@@ -100,7 +100,10 @@ public class CreateRulesCommandHandler : RequestHandlerBase
 		try
 		{
 			await _db.Rules.CreateAsync(validatedRules, dbProperty.Id, dbProperty.EndpointId, ct);
-			await _db.Endpoints.SetModificationDateAsync(DateTimeOffset.UtcNow, endpointId.Value, ct);
+			
+			var timeNow = DateTimeOffset.UtcNow;
+			await _db.Properties.SetModificationDateAsync(timeNow, dbProperty.Id, ct);
+			await _db.Endpoints.SetModificationDateAsync(timeNow, dbProperty.EndpointId, ct);
 		}
 		catch (Exception ex)
 		{
