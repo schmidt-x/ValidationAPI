@@ -79,31 +79,18 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		return await Connection.ExecuteScalarAsync<bool>(command);
 	}
 
-	public async Task<RuleExpandedResponse> SetNameAsync(string newName, int id, CancellationToken ct)
+	public Task<RuleExpandedResponse> SetNameAsync(string newName, int id, CancellationToken ct)
 	{
-		const string query = """
-			WITH updated_rule AS (
-				UPDATE rules
-				SET name = @NewName, normalized_name = @NormalizedName
-				WHERE id = @Id
-				RETURNING *
-			)
-			SELECT e.name,
-			       p.name,
-			       r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message
-			FROM updated_rule r
-			INNER JOIN properties p ON p.id = r.property_id
-			INNER JOIN endpoints e ON e.id = r.endpoint_id;
-			""";
+		var parameters = new { newName, NormalizedName = newName.ToUpperInvariant(), id };
 		
-		var command = NewCommandDefinition(query, new { newName, NormalizedName = newName.ToUpperInvariant(), id }, ct);
-		
-		var ruleEntry = await Connection.QueryAsync<string, string, Rule, RuleExpandedResponse>(
-			command, (e, p, r) => r.ToExpandedResponse(p, e), splitOn: "name");
-		
-		return ruleEntry.Single();
+		return SetColumn("name = @NewName, normalized_name = @NormalizedName", parameters, ct);
 	}
 
+	public Task<RuleExpandedResponse> SetErrorMessageAsync(string? errorMessage, int id, CancellationToken ct)
+	{
+		return SetColumn("error_message = @ErrorMessage", new { errorMessage, id }, ct);
+	}
+	
 	public async Task<RuleExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string rule, int endpointId, CancellationToken ct)
 	{
@@ -200,6 +187,28 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		return GetAllExpandedResponses("e.id = @EndpointId", new { endpointId }, take, offset, orderBy, desc, ct);
 	}
 	
+	
+	private async Task<RuleExpandedResponse> SetColumn(string column, object parameters, CancellationToken ct)
+	{
+		string query = $"""
+			WITH updated_rule AS (
+				UPDATE rules SET {column} WHERE id = @Id RETURNING *
+			)
+			SELECT e.name,
+			       p.name,
+			       r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message
+			FROM updated_rule r
+			INNER JOIN properties p ON p.id = r.property_id
+			INNER JOIN endpoints e ON e.id = r.endpoint_id; 
+			""";
+		
+		var command = NewCommandDefinition(query, parameters, ct);
+		
+		var ruleEntry = await Connection.QueryAsync<string, string, Rule, RuleExpandedResponse>(
+			command, (e, p, r) => r.ToExpandedResponse(p, e), splitOn: "name");
+		
+		return ruleEntry.Single();
+	}
 	
 	private async Task<List<RuleExpandedResponse>> GetAllExpandedResponses(
 		string condition, object parameters, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct)

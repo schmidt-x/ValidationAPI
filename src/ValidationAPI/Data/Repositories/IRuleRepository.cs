@@ -16,6 +16,7 @@ public interface IRuleRepository
 	Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<RuleExpandedResponse> SetNameAsync(string newName, int id, CancellationToken ct);
+	Task<RuleExpandedResponse> SetErrorMessageAsync(string? errorMessage, int id, CancellationToken ct);
 	Task<RuleExpandedResponse?> GetExpandedResponseIfExistsAsync(string rule, int endpointId, CancellationToken ct);
 	Task<List<Rule>> GetAllByPropertyIdAsync(IEnumerable<int> propertyIds, CancellationToken ct);
 	Task<List<string>> GetAllNamesAsync(int endpointId, CancellationToken ct);

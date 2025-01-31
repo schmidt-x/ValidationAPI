@@ -9,6 +9,7 @@ using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Rules.Commands.CreateRules;
 using ValidationAPI.Features.Rules.Commands.DeleteRule;
+using ValidationAPI.Features.Rules.Commands.UpdateErrorMessage;
 using ValidationAPI.Features.Rules.Commands.UpdateName;
 using ValidationAPI.Features.Rules.Queries.GetRule;
 using ValidationAPI.Features.Rules.Queries.GetRules;
@@ -54,6 +55,12 @@ public class Rule : EndpointGroupBase
 			.Produces<RuleExpandedResponse>()
 			.Produces(StatusCodes.Status401Unauthorized)
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.DisableAntiforgery(); // TODO: remove
+		
+		g.MapPatch("{rule}/error-message", UpdateErrorMessage)
+			.WithSummary("Updates rule's error message")
+			.Produces<RuleExpandedResponse>()
+			.Produces(StatusCodes.Status401Unauthorized)
 			.DisableAntiforgery(); // TODO: remove
 	}
 	
@@ -122,5 +129,18 @@ public class Rule : EndpointGroupBase
 				NotFoundException => Results.NotFound(),
 				_ => Results.UnprocessableEntity(FailResponse.From(ex))
 			});
+	}
+	
+	public async Task<IResult> UpdateErrorMessage(
+		[FromRoute] string rule,
+		[FromQuery] string endpoint,
+		[FromForm] string errorMessage,
+		UpdateErrorMessageCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new UpdateErrorMessageCommand(rule, endpoint, errorMessage);
+		Result<RuleExpandedResponse> result = await handler.Handle(command, ct);
+		
+		return result.Match(Results.Ok, _ => Results.NotFound());
 	}
 }
