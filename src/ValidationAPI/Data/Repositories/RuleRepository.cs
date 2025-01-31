@@ -48,6 +48,20 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		await Connection.ExecuteAsync(command);
 	}
 
+	public async Task<Rule?> GetIfExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = "SELECT * FROM rules WHERE (normalized_name, endpoint_id) = (@Name, @EndpointId);";
+		
+		var command = NewCommandDefinition(query, new { name = name.ToUpperInvariant(), endpointId }, ct);
+		return await Connection.QuerySingleOrDefaultAsync<Rule>(command);
+	}
+	
+	public async Task DeleteAsync(int id, CancellationToken ct)
+	{
+		const string query = "DELETE FROM rules WHERE id = @Id;";
+		await Connection.ExecuteAsync(NewCommandDefinition(query, new { id }, ct));
+	}
+	
 	public async Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct)
 	{
 		const string query = "SELECT id FROM rules WHERE (normalized_name, endpoint_id) = (@Name, @EndpointId);";

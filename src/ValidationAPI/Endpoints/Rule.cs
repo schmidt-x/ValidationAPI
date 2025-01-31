@@ -8,6 +8,7 @@ using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Rules.Commands.CreateRules;
+using ValidationAPI.Features.Rules.Commands.DeleteRule;
 using ValidationAPI.Features.Rules.Commands.UpdateName;
 using ValidationAPI.Features.Rules.Queries.GetRule;
 using ValidationAPI.Features.Rules.Queries.GetRules;
@@ -41,6 +42,11 @@ public class Rule : EndpointGroupBase
 		g.MapGet("", GetAll)
 			.WithSummary("Returns all rules (optionally scopes to a specific Endpoint)")
 			.Produces<PaginatedList<RuleExpandedResponse>>()
+			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapDelete("{rule}", Delete)
+			.WithSummary("Deletes a rule")
+			.Produces(StatusCodes.Status204NoContent)
 			.Produces(StatusCodes.Status401Unauthorized);
 		
 		g.MapPatch("{rule}/name", UpdateName)
@@ -88,6 +94,15 @@ public class Rule : EndpointGroupBase
 		Result<PaginatedList<RuleExpandedResponse>> result = await handler.Handle(query, ct);
 		
 		return result.Match(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public async Task<IResult> Delete(
+		[FromRoute] string rule, [FromQuery] string endpoint, DeleteRuleCommandHandler handler, CancellationToken ct)
+	{
+		var command = new DeleteRuleCommand(rule, endpoint);
+		Exception? ex = await handler.Handle(command, ct);
+		
+		return ex is null ? Results.NoContent() : Results.NotFound();
 	}
 	
 	public async Task<IResult> UpdateName(

@@ -11,6 +11,8 @@ namespace ValidationAPI.Data.Repositories;
 public interface IRuleRepository
 {
 	Task CreateAsync(List<Rule> rules, int propertyId, int endpointId, CancellationToken ct);
+	Task<Rule?> GetIfExistsAsync(string name, int endpointId, CancellationToken ct);
+	Task DeleteAsync(int id, CancellationToken ct);
 	Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct);
 	Task<RuleExpandedResponse> SetNameAsync(string newName, int id, CancellationToken ct);
