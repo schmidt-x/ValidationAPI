@@ -4,7 +4,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ValidationAPI.Common.Models;
+using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Rules.Commands.CreateRules;
+using ValidationAPI.Features.Rules.Queries.GetRule;
 using ValidationAPI.Infra;
 using ValidationAPI.Requests;
 using ValidationAPI.Responses;
@@ -26,6 +29,11 @@ public class Rule : EndpointGroupBase
 			.Produces(StatusCodes.Status201Created)
 			.Produces(StatusCodes.Status401Unauthorized)
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity);
+		
+		g.MapGet("{rule}", Get)
+			.WithSummary("Returns a rule")
+			.Produces<RuleExpandedResponse>()
+			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
 	public static async Task<IResult> Create(
@@ -43,5 +51,12 @@ public class Rule : EndpointGroupBase
 		};
 	}
 	
-	
+	public async Task<IResult> Get(
+		[FromRoute] string rule, [FromQuery] string endpoint, GetRuleQueryHandler handler, CancellationToken ct)
+	{
+		var query = new GetRuleQuery(rule, endpoint);
+		Result<RuleExpandedResponse> result = await handler.Handle(query, ct);
+		
+		return result.Match(Results.Ok, _ => Results.NotFound());
+	}
 }

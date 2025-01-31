@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Rule = ValidationAPI.Domain.Entities.Rule;
 using Dapper;
+using ValidationAPI.Domain.Models;
 
 namespace ValidationAPI.Data.Repositories;
 
@@ -44,6 +45,27 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		await Connection.ExecuteAsync(command);
 	}
 
+	public async Task<RuleExpandedResponse?> GetExpandedResponseIfExistsAsync(
+		string rule, int endpointId, CancellationToken ct)
+	{
+		const string query = """
+			SELECT r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message,
+			       p.name,
+			       e.name
+			FROM rules r
+			INNER JOIN properties p ON p.id = r.property_id
+			INNER JOIN endpoints e ON e.id = p.endpoint_id
+			WHERE (r.normalized_name, r.endpoint_id) = (@RuleName, @EndpointId);
+			""";
+		
+		var command = NewCommandDefinition(query, new { ruleName = rule.ToUpperInvariant(), endpointId }, ct);
+		
+		var ruleEntry = await Connection.QueryAsync<Rule, string, string, RuleExpandedResponse>(
+			command, (r, p, e) => r.ToExpandedResponse(p, e), splitOn: "name");
+		
+		return ruleEntry.SingleOrDefault();
+	}
+	
 	public async Task<List<Rule>> GetAllByPropertyIdAsync(IEnumerable<int> propertyIds, CancellationToken ct)
 	{
 		const string query = "SELECT * FROM rules WHERE property_id = ANY (@PropertyIds)";
@@ -56,7 +78,7 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 	
 	public async Task<List<string>> GetAllNamesAsync(int endpointId, CancellationToken ct)
 	{
-		const string query = "select normalized_name from rules where endpoint_id = @EndpointId";
+		const string query = "SELECT normalized_name FROM rules WHERE endpoint_id = @EndpointId";
 		
 		var command = new CommandDefinition(query, new { endpointId }, Transaction, cancellationToken: ct);
 		

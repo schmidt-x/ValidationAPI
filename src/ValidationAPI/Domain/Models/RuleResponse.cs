@@ -5,7 +5,7 @@ namespace ValidationAPI.Domain.Models;
 
 public record RuleResponse(string Name, RuleType Type, object Value, string ErrorMessage);
 
-public static class RuleExtensions
+public static partial class RuleExtensions
 {
 	public static RuleResponse ToResponse(this Rule rule)
 	{
