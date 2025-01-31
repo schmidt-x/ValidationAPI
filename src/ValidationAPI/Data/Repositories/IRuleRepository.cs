@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ValidationAPI.Domain.Enums;
 using ValidationAPI.Domain.Models;
 using Rule = ValidationAPI.Domain.Entities.Rule;
 
@@ -14,4 +16,12 @@ public interface IRuleRepository
 	Task<List<string>> GetAllNamesAsync(int endpointId, CancellationToken ct);
 	Task<string?> GetReferencingRuleNameIfExistsAsync(string propertyName, int endpointId, CancellationToken ct);
 	Task UpdateReferencingRulesAsync(string oldValue, string newValue, int endpointId, CancellationToken ct);
+	Task<int> CountAsync(Guid userId, CancellationToken ct);
+	Task<int> CountAsync(int endpointId, CancellationToken ct);
+	
+	Task<List<RuleExpandedResponse>> GetAllExpandedResponsesAsync(
+		Guid userId, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct);
+	
+	Task<List<RuleExpandedResponse>> GetAllExpandedResponsesByEndpointAsync(
+		int endpointId, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct);
 }

@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Rule = ValidationAPI.Domain.Entities.Rule;
 using Dapper;
+using ValidationAPI.Domain.Enums;
 using ValidationAPI.Domain.Models;
+using ValidationAPI.Data.Extensions;
 
 namespace ValidationAPI.Data.Repositories;
 
@@ -110,6 +113,60 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		await Connection.ExecuteAsync(command);
 	}
 	
+	public async Task<int> CountAsync(Guid userId, CancellationToken ct)
+	{
+		const string query = """
+			SELECT count(*)
+			FROM endpoints e
+			INNER JOIN rules r ON r.endpoint_id = e.id
+			WHERE e.user_id = @UserId;
+			""";
+		
+		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(query, new { userId }, ct));
+	}
+	
+	public async Task<int> CountAsync(int endpointId, CancellationToken ct)
+	{
+		const string query = "SELECT count(*) FROM rules WHERE endpoint_id = @EndpointId;";
+		
+		return await Connection.ExecuteScalarAsync<int>(NewCommandDefinition(query, new { endpointId }, ct));
+	}
+	
+	public Task<List<RuleExpandedResponse>> GetAllExpandedResponsesAsync(
+		Guid userId, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct)
+	{
+		return GetAllExpandedResponses("e.user_id = @UserId", new { userId }, take, offset, orderBy, desc, ct);
+	}
+	
+	public Task<List<RuleExpandedResponse>> GetAllExpandedResponsesByEndpointAsync(
+		int endpointId, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct)
+	{
+		return GetAllExpandedResponses("e.id = @EndpointId", new { endpointId }, take, offset, orderBy, desc, ct);
+	}
+	
+	
+	private async Task<List<RuleExpandedResponse>> GetAllExpandedResponses(
+		string condition, object parameters, int? take, int? offset, RuleOrder? orderBy, bool desc, CancellationToken ct)
+	{
+		string query = $"""
+			SELECT e.name,
+			       p.name,
+			       r.name, r.type, r.value, r.raw_value, r.value_type, r.error_message
+			FROM endpoints e
+			INNER JOIN properties p ON p.endpoint_id = e.id
+			INNER JOIN rules r ON r.property_id = p.id
+			WHERE {condition}
+			ORDER BY {orderBy?.ToDbName() ?? "r.id"} {(desc ? "DESC" : "ASC")}
+			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0}
+			""";
+		
+		var command = NewCommandDefinition(query, parameters, ct);
+		
+		var rules = await Connection.QueryAsync<string, string, Rule, RuleExpandedResponse>(
+			command, (e, p, r) => r.ToExpandedResponse(p, e), splitOn: "name");
+		
+		return (List<RuleExpandedResponse>)rules;
+	}
 	
 	private CommandDefinition NewCommandDefinition(string query, object parameters, CancellationToken ct)
 		=> new(query, parameters, Transaction, cancellationToken: ct);

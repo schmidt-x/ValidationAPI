@@ -8,6 +8,7 @@ using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Rules.Commands.CreateRules;
 using ValidationAPI.Features.Rules.Queries.GetRule;
+using ValidationAPI.Features.Rules.Queries.GetRules;
 using ValidationAPI.Infra;
 using ValidationAPI.Requests;
 using ValidationAPI.Responses;
@@ -34,6 +35,11 @@ public class Rule : EndpointGroupBase
 			.WithSummary("Returns a rule")
 			.Produces<RuleExpandedResponse>()
 			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapGet("", GetAll)
+			.WithSummary("Returns all rules (optionally scopes to a specific Endpoint)")
+			.Produces<PaginatedList<RuleExpandedResponse>>()
+			.Produces(StatusCodes.Status401Unauthorized);
 	}
 	
 	public static async Task<IResult> Create(
@@ -56,6 +62,21 @@ public class Rule : EndpointGroupBase
 	{
 		var query = new GetRuleQuery(rule, endpoint);
 		Result<RuleExpandedResponse> result = await handler.Handle(query, ct);
+		
+		return result.Match(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public async Task<IResult> GetAll(
+		[AsParameters] GetRulesRequest request, GetRulesQueryHandler handler, CancellationToken ct)
+	{
+		var query = new GetRulesQuery(
+			request.Endpoint,
+			request.PageNumber ?? 1,
+			request.PageSize ?? 50,
+			request.OrderBy,
+			request.Desc ?? false);
+		
+		Result<PaginatedList<RuleExpandedResponse>> result = await handler.Handle(query, ct);
 		
 		return result.Match(Results.Ok, _ => Results.NotFound());
 	}
