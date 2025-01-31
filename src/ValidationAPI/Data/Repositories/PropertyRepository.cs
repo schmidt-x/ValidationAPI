@@ -8,6 +8,7 @@ using Dapper;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Domain.Enums;
+using ValidationAPI.Data.Extensions;
 using Rule = ValidationAPI.Domain.Entities.Rule;
 
 namespace ValidationAPI.Data.Repositories;
@@ -121,8 +122,8 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 	{
 		const string query = """
 			SELECT count(*)
-			FROM properties p
-			INNER JOIN endpoints e ON e.id = p.endpoint_id
+			FROM endpoints e
+			INNER JOIN properties p ON p.endpoint_id = e.id
 			WHERE e.user_id = @UserId;
 			""";
 		
@@ -201,8 +202,8 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		string query = $"""
 			SELECT p.name, p.type, p.is_optional, p.created_at, p.modified_at,
 			       e.name AS endpoint
-			FROM properties p
-			INNER JOIN endpoints e ON e.id = p.endpoint_id
+			FROM endpoints e
+			INNER JOIN properties p ON p.endpoint_id = e.id
 			WHERE {condition}
 			ORDER BY {orderBy?.ToDbName() ?? "p.id"} {(desc ? "DESC" : "ASC")}
 			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0};
