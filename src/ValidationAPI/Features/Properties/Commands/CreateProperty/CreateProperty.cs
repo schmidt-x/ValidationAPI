@@ -6,13 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using FluentValidation;
-using ValidationAPI.Common.Delegates;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Services;
 using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
-using ValidationAPI.Domain.Enums;
 using ValidationAPI.Common.Validators.RuleValidators;
 using ValidationAPI.Features.Infra;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
@@ -70,24 +68,13 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			return new OperationInvalidException($"Rule with the name '{duplicateRule.Name}' already exists (case-insensitive).");
 		}
 		
-		RuleValidator validator = propertyRequest.Type switch
-		{
-			PropertyType.String   => RuleValidators.ValidateString,
-			PropertyType.Int      => throw new NotImplementedException(),
-			PropertyType.Float    => throw new NotImplementedException(),
-			PropertyType.DateTime => throw new NotImplementedException(),
-			PropertyType.DateOnly => throw new NotImplementedException(),
-			PropertyType.TimeOnly => throw new NotImplementedException(),
-			_ => throw new ArgumentOutOfRangeException(nameof(command))
-		};
-		
 		var dbProperties = (await _db.Properties.GetAllByEndpointIdAsync(endpointId.Value, ct))
 			.ToDictionary(p => p.Name, p => new PropertyRequest(p.Type, p.IsOptional));
 		
 		Dictionary<string, List<ErrorDetail>> failures = [];
 		
-		var validatedRules = validator.Invoke(
-			"Property.Rules", propertyRequest.Name, propertyRequest.Rules, dbProperties, failures);
+		var validatedRules = RuleValidators.Validate(
+			"Property.Rules", propertyRequest.Type, propertyRequest.Name, propertyRequest.Rules, dbProperties, failures);
 		
 		if (validatedRules is null)
 		{

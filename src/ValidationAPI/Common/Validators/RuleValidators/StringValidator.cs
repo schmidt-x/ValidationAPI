@@ -17,7 +17,7 @@ public static partial class RuleValidators
 	[GeneratedRegex(@"^{(\w+)(\..+)?}$")]
 	private static partial Regex GetPropertyAndOptionRegex();
 	
-	public static List<Rule>? ValidateString(
+	private static List<Rule>? ValidateString(
 		string failureKey,
 		string propertyName,
 		RuleRequest[] rules,

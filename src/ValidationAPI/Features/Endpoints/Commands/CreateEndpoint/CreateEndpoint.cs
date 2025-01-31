@@ -4,13 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using Serilog;
-using ValidationAPI.Common.Delegates;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Services;
 using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
-using ValidationAPI.Domain.Enums;
 using ValidationAPI.Features.Infra;
 using ValidationAPI.Common.Validators.RuleValidators;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
@@ -28,17 +26,13 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 	private readonly ILogger _logger;
 	
 	public CreateEndpointCommandHandler(
-		IValidator<CreateEndpointCommand> validator,
-		IUser user,
-		IRepositoryContext db,
-		ILogger logger)
+		IValidator<CreateEndpointCommand> validator, IUser user, IRepositoryContext db, ILogger logger)
 	{
 		_validator = validator;
 		_user = user;
 		_db = db;
 		_logger = logger;
 	}
-
 	
 	public async Task<Exception?> Handle(CreateEndpointCommand command, CancellationToken ct)
 	{
@@ -54,19 +48,8 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		
 		foreach ((string propertyName, PropertyRequest property) in command.Properties)
 		{
-			RuleValidator validator = property.Type switch
-			{
-				PropertyType.String   => RuleValidators.ValidateString,
-				PropertyType.Int      => throw new NotImplementedException(),
-				PropertyType.Float    => throw new NotImplementedException(), // TODO: combine with Int?
-				PropertyType.DateTime => throw new NotImplementedException(), // TODO: combine with the following two?
-				PropertyType.DateOnly => throw new NotImplementedException(),
-				PropertyType.TimeOnly => throw new NotImplementedException(),
-				_ => throw new ArgumentOutOfRangeException(nameof(command))
-			};
-			
-			var validatedRules = validator.Invoke(
-				$"Properties.{propertyName}", propertyName, property.Rules, command.Properties, failures);
+			var validatedRules = RuleValidators.Validate(
+				$"Properties.{propertyName}", property.Type, propertyName, property.Rules, command.Properties, failures);
 			
 			if (validatedRules is null) continue;
 			
