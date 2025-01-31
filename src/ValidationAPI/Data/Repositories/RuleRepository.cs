@@ -48,6 +48,48 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		await Connection.ExecuteAsync(command);
 	}
 
+	public async Task<int?> GetIdIfExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = "SELECT id FROM rules WHERE (normalized_name, endpoint_id) = (@Name, @EndpointId);";
+		
+		var command = NewCommandDefinition(query, new { Name = name.ToUpperInvariant(), endpointId }, ct);
+		return await Connection.ExecuteScalarAsync<int?>(command);
+	}
+
+	public async Task<bool> NameExistsAsync(string name, int endpointId, CancellationToken ct)
+	{
+		const string query = 
+			"SELECT exists(SELECT 1 FROM rules WHERE (normalized_name, endpoint_id) = (@Name, @EndpointId));";
+		
+		var command = NewCommandDefinition(query, new { Name = name.ToUpperInvariant(), endpointId }, ct);
+		return await Connection.ExecuteScalarAsync<bool>(command);
+	}
+
+	public async Task<RuleExpandedResponse> SetNameAsync(string newName, int id, CancellationToken ct)
+	{
+		const string query = """
+			WITH updated_rule AS (
+				UPDATE rules
+				SET name = @NewName, normalized_name = @NormalizedName
+				WHERE id = @Id
+				RETURNING *
+			)
+			SELECT e.name,
+			       p.name,
+			       r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message
+			FROM updated_rule r
+			INNER JOIN properties p ON p.id = r.property_id
+			INNER JOIN endpoints e ON e.id = r.endpoint_id;
+			""";
+		
+		var command = NewCommandDefinition(query, new { newName, NormalizedName = newName.ToUpperInvariant(), id }, ct);
+		
+		var ruleEntry = await Connection.QueryAsync<string, string, Rule, RuleExpandedResponse>(
+			command, (e, p, r) => r.ToExpandedResponse(p, e), splitOn: "name");
+		
+		return ruleEntry.Single();
+	}
+
 	public async Task<RuleExpandedResponse?> GetExpandedResponseIfExistsAsync(
 		string rule, int endpointId, CancellationToken ct)
 	{

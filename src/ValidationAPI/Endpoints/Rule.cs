@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Models;
 using ValidationAPI.Features.Rules.Commands.CreateRules;
+using ValidationAPI.Features.Rules.Commands.UpdateName;
 using ValidationAPI.Features.Rules.Queries.GetRule;
 using ValidationAPI.Features.Rules.Queries.GetRules;
 using ValidationAPI.Infra;
@@ -40,6 +42,13 @@ public class Rule : EndpointGroupBase
 			.WithSummary("Returns all rules (optionally scopes to a specific Endpoint)")
 			.Produces<PaginatedList<RuleExpandedResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
+		
+		g.MapPatch("{rule}/name", UpdateName)
+			.WithSummary("Renames a rule")
+			.Produces<RuleExpandedResponse>()
+			.Produces(StatusCodes.Status401Unauthorized)
+			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
+			.DisableAntiforgery(); // TODO: remove
 	}
 	
 	public static async Task<IResult> Create(
@@ -79,5 +88,24 @@ public class Rule : EndpointGroupBase
 		Result<PaginatedList<RuleExpandedResponse>> result = await handler.Handle(query, ct);
 		
 		return result.Match(Results.Ok, _ => Results.NotFound());
+	}
+	
+	public async Task<IResult> UpdateName(
+		[FromRoute] string rule,
+		[FromQuery] string endpoint,
+		[FromForm] string newName,
+		UpdateNameCommandHandler handler,
+		CancellationToken ct)
+	{
+		var command = new UpdateNameCommand(rule, endpoint, newName);
+		Result<RuleExpandedResponse> result = await handler.Handle(command, ct);
+		
+		return result.Match(
+			Results.Ok,
+			ex => ex switch
+			{
+				NotFoundException => Results.NotFound(),
+				_ => Results.UnprocessableEntity(FailResponse.From(ex))
+			});
 	}
 }
