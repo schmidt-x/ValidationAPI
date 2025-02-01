@@ -15,13 +15,18 @@ namespace ValidationAPI.Endpoints;
 
 public class Validation : EndpointGroupBase
 {
+	private const string BaseAddress = "api/validate";
+	
 	public override void Map(WebApplication app)
 	{
-		app.MapPost("api/validate/{endpoint}", Validate)
+		var g = app.MapGroup(BaseAddress).WithTags("Validation");
+		
+		g.MapPost("{endpoint}", Validate)
 			.WithSummary("Validates a request")
 			.Produces<ValidationResult>()
+			.Produces(StatusCodes.Status401Unauthorized)
 			.Produces<FailResponse>(StatusCodes.Status422UnprocessableEntity)
-			.Produces(StatusCodes.Status401Unauthorized);
+			.RequireAuthorization();
 	}
 	
 	public async Task<IResult> Validate(
