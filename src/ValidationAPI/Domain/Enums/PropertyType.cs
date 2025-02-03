@@ -2,9 +2,9 @@
 
 public enum PropertyType
 {
-	String,
 	Int,
 	Float,
+	String,
 	DateTime,
 	DateOnly,
 	TimeOnly

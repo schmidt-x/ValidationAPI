@@ -8,7 +8,7 @@ public class EndpointMigration : Migration
 	public override void Up()
 	{
 		const string sql = """
-			CREATE TYPE propertytype AS ENUM ('String', 'Int', 'Float', 'DateTime', 'DateOnly', 'TimeOnly');
+			CREATE TYPE propertytype AS ENUM ('Int', 'Float', 'String', 'DateTime', 'DateOnly', 'TimeOnly');
 
 			CREATE TYPE ruletype AS ENUM (
 				'Less', 'More', 'LessOrEqual', 'MoreOrEqual', 'Equal', 'NotEqual', 'Between', 'Outside', 'Regex', 'Email');
