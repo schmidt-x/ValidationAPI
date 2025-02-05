@@ -14,15 +14,14 @@ using ValidationAPI.Data;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
 using ValidationAPI.Features.Infra;
-using ValidationAPI.Features.Validation.Queries.ValidateRequest.Validators;
+using ValidationAPI.Features.Validation.Models;
+using ValidationAPI.Features.Validation.Validators;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
 namespace ValidationAPI.Features.Validation.Queries.ValidateRequest;
 
 public record ValidateRequestQuery(string Endpoint, Dictionary<string, JsonElement> Body);
-
-public record UnvalidatedProperty(int Id, string Name, PropertyType Type, JsonElement Value);
 
 public class ValidateRequestQueryHandler : RequestHandlerBase
 {
