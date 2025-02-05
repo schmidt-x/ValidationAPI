@@ -64,7 +64,7 @@ public class UpdateErrorMessageCommandHandler : RequestHandlerBase
 		}
 		
 		_logger.Information(
-			"[{UserId}] [{Action}] [{RuleId}] Description updated.", userId, "RuleUpdateErrorMessage", ruleId.Value);
+			"[{UserId}] [{Action}] [{RuleId}] Error message updated.", userId, "RuleUpdateErrorMessage", ruleId.Value);
 		
 		return updatedRule;
 	}

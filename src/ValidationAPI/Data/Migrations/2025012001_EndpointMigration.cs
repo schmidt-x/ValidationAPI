@@ -13,7 +13,7 @@ public class EndpointMigration : Migration
 			CREATE TYPE ruletype AS ENUM (
 				'Less', 'More', 'LessOrEqual', 'MoreOrEqual', 'Equal', 'NotEqual', 'Between', 'Outside', 'Regex', 'Email');
 
-			CREATE TYPE rulevaluetype AS ENUM ('Int', 'Float', 'String');
+			CREATE TYPE rulevaluetype AS ENUM ('Int', 'Float', 'String', 'Range');
 
 			CREATE TABLE endpoints (
 				id              SERIAL      PRIMARY KEY,

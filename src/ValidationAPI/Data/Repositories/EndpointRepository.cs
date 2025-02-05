@@ -73,7 +73,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		query = """
 			SELECT e.id, e.name, e.description, e.created_at, e.modified_at,
 			       p.id, p.name, p.type, p.is_optional, p.created_at, p.modified_at,
-			       r.id, r.name, r.type, r.value, r.value_type, r.raw_value, r.error_message, r.property_id
+			       r.id, r.name, r.type, r.value, r.value_type, r.raw_value, r.extra_info, r.error_message, r.property_id
 			FROM endpoints e
 			LEFT JOIN properties p ON p.endpoint_id = e.id
 			LEFT JOIN rules r ON r.property_id = p.id

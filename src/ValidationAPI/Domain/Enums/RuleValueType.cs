@@ -4,5 +4,6 @@ public enum RuleValueType
 {
 	Int,
 	Float,
-	String
+	String,
+	Range
 }

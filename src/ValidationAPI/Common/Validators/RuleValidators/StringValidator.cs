@@ -46,10 +46,10 @@ public static partial class RuleValidators
 					switch (value.ValueKind)
 					{
 						case JsonValueKind.Number:
-							if (!value.TryGetInt64(out var val))
+							if (!value.TryGetInt32(out var val))
 							{
 								failures.AddErrorDetail(
-									failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int64).");
+									failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int32).");
 								continue;
 							}
 							if (failures.Count != 0) continue;
@@ -184,9 +184,62 @@ public static partial class RuleValidators
 				
 				case RuleType.Between:
 				case RuleType.Outside:
-					failures.AddErrorDetail(
-						failureKey, INVALID_RULE_TYPE, $"[{rule.Name}] Rule-type is not currently implemented.");
-					continue;
+					if (rule.Value.ValueKind != JsonValueKind.Array)
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "Array", value.ValueKind.ToString()));
+						continue;
+					}
+					
+					var arrayLength = value.GetArrayLength();
+					if (arrayLength != 2)
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Array must contain 2 elements; got: {arrayLength}.");
+						continue;
+					}
+					
+					JsonElement left;
+					JsonElement right;
+					
+					using (var enumerator = rule.Value.EnumerateArray())
+					{
+						enumerator.MoveNext();
+						left = enumerator.Current;
+						enumerator.MoveNext();
+						right = enumerator.Current;
+					}
+					if (left.ValueKind != JsonValueKind.Number || left.ValueKind != right.ValueKind)
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Both values must be of the same type Number (Int32).");
+						continue;
+					}
+					if (!left.TryGetInt32(out var lNum))
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The lower bound is not a valid Number (Int32).");
+						continue;
+					}
+					if (!right.TryGetInt32(out var rNum))
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The upper bound is not a valid Number (Int32).");
+						continue;
+					}
+					if (lNum >= rNum)
+					{
+						failures.AddErrorDetail(
+							failureKey, INVALID_RULE_VALUE,
+							$"[{rule.Name}] The lower bound cannot be equal to or greater than the upper bound.");
+						continue;
+					}
+					if (failures.Count != 0) continue;
+					
+					ruleValue = $"{lNum} {rNum}";
+					ruleExtraInfo = ruleValue.IndexOf(' ').ToString();
+					ruleValueType = RuleValueType.Range;
+					break;
 				
 				case RuleType.Regex:
 					if (value.ValueKind != JsonValueKind.String)
