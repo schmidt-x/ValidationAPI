@@ -1,5 +1,6 @@
 ﻿using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
+using ValidationAPI.Domain.Extensions;
 
 namespace ValidationAPI.Domain.Models;
 
@@ -14,6 +15,7 @@ public static partial class RuleExtensions
 		{
 			RuleValueType.Int   => long.Parse(rule.Value),
 			RuleValueType.Float => double.Parse(rule.Value),
+			RuleValueType.Range => rule.GetRangeArray(),
 			_ => rule.RawValue ?? rule.Value
 		};
 		

@@ -56,12 +56,12 @@ public class RenameEndpointCommandHandler : RequestHandlerBase
 				$"Endpoint with the name '{command.NewName}' already exists (case-insensitive).");
 		}
 		
-		var newEndpoint = new Domain.Models.RenameEndpoint(command.NewName, command.NewName.ToUpperInvariant());
 		EndpointResponse response;
 		
 		try
 		{
-			response = await _db.Endpoints.RenameAsync(newEndpoint, endpointId.Value, ct);
+			response = await _db.Endpoints.RenameAsync
+				(command.NewName, command.NewName.ToUpperInvariant(), endpointId.Value, ct);
 		}
 		catch (Exception ex)
 		{

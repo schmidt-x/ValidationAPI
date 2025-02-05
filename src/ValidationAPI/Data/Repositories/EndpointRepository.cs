@@ -73,7 +73,7 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		query = """
 			SELECT e.id, e.name, e.description, e.created_at, e.modified_at,
 			       p.id, p.name, p.type, p.is_optional, p.created_at, p.modified_at,
-			       r.id, r.name, r.type, r.value, r.value_type, r.raw_value, r.extra_info, r.error_message, r.property_id
+			       r.id, r.name, r.type, r.value, r.raw_value, r.value_type, r.extra_info, r.error_message, r.property_id
 			FROM endpoints e
 			LEFT JOIN properties p ON p.endpoint_id = e.id
 			LEFT JOIN rules r ON r.property_id = p.id
@@ -134,7 +134,8 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return (List<EndpointResponse>)endpoints;
 	}
 	
-	public async Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct)
+	public async Task<EndpointResponse> RenameAsync(
+		string newName, string newNormalizedName, int endpointId, CancellationToken ct)
 	{
 		const string query = """
 			UPDATE endpoints
@@ -143,10 +144,8 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 			RETURNING name, description, created_at, modified_at;
 			""";
 		
-		var dParams = new DynamicParameters(endpoint);
-		dParams.Add(nameof(endpointId), endpointId);
-		
-		var command = new CommandDefinition(query, dParams, Transaction, cancellationToken: ct);
+		var parameters = new { newName, newNormalizedName, endpointId };
+		var command = new CommandDefinition(query, parameters, Transaction, cancellationToken: ct);
 		
 		return await Connection.QuerySingleAsync<EndpointResponse>(command);
 	}

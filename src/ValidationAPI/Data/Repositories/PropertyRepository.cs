@@ -70,7 +70,7 @@ public class PropertyRepository : RepositoryBase, IPropertyRepository
 		query = """
 			SELECT e.name,
 			       p.name, p.type, p.is_optional, p.created_at, p.modified_at,
-			       r.name, r.type, r.value, r.raw_value, r.value_type, r.error_message
+			       r.name, r.type, r.value, r.raw_value, r.value_type, r.extra_info, r.error_message
 			FROM properties p
 			INNER JOIN endpoints e ON e.id = p.endpoint_id
 			LEFT JOIN rules r ON r.property_id = p.id

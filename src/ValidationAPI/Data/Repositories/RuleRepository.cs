@@ -95,7 +95,7 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		string rule, int endpointId, CancellationToken ct)
 	{
 		const string query = """
-			SELECT r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message,
+			SELECT r.name, r.type, r.value, r.raw_value, r.value_type, r.extra_info, r.error_message,
 			       p.name,
 			       e.name
 			FROM rules r
@@ -196,7 +196,7 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 			)
 			SELECT e.name,
 			       p.name,
-			       r.name, r.type, r.raw_value, r.value, r.value_type, r.error_message
+			       r.name, r.type, r.value, r.raw_value, r.value_type, r.extra_info, r.error_message
 			FROM updated_rule r
 			INNER JOIN properties p ON p.id = r.property_id
 			INNER JOIN endpoints e ON e.id = r.endpoint_id; 
@@ -216,7 +216,7 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 		string query = $"""
 			SELECT e.name,
 			       p.name,
-			       r.name, r.type, r.value, r.raw_value, r.value_type, r.error_message
+			       r.name, r.type, r.value, r.raw_value, r.value_type, r.extra_info, r.error_message
 			FROM endpoints e
 			INNER JOIN properties p ON p.endpoint_id = e.id
 			INNER JOIN rules r ON r.property_id = p.id

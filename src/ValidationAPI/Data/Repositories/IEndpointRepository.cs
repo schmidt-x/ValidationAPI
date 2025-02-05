@@ -17,7 +17,7 @@ public interface IEndpointRepository
 		string name, Guid userId, bool includePropertiesAndRules, CancellationToken ct);
 	
 	Task<List<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct);
-	Task<EndpointResponse> RenameAsync(RenameEndpoint endpoint, int endpointId, CancellationToken ct);
+	Task<EndpointResponse> RenameAsync(string newName, string newNormalizedName, int endpointId, CancellationToken ct);
 	Task<EndpointResponse> UpdateDescriptionAsync(string? description, int endpointId, CancellationToken ct);
 	Task DeleteAsync(int endpointId, CancellationToken ct);
 	Task SetModificationDateAsync(DateTimeOffset modifiedAt, int endpointId, CancellationToken ct);
