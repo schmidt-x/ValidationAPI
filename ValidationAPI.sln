@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FD1EFAFF-21C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValidationAPI", "src\ValidationAPI\ValidationAPI.csproj", "{E81D83A2-DFE6-4606-BBA6-6C99D4880A77}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2A408241-FF0C-4D98-AEE4-4953860423A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValidationAPI.UnitTests", "tests\ValidationAPI.UnitTests\ValidationAPI.UnitTests.csproj", "{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +24,13 @@ Global
 		{E81D83A2-DFE6-4606-BBA6-6C99D4880A77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E81D83A2-DFE6-4606-BBA6-6C99D4880A77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E81D83A2-DFE6-4606-BBA6-6C99D4880A77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E81D83A2-DFE6-4606-BBA6-6C99D4880A77} = {FD1EFAFF-21C1-40D2-A393-40329CCE24F5}
+		{C3A0EEF5-BF42-4C7C-A7B0-E5715636DDCE} = {2A408241-FF0C-4D98-AEE4-4953860423A5}
 	EndGlobalSection
 EndGlobal

@@ -69,18 +69,18 @@ public class CreateRulesCommandHandler : RequestHandlerBase
 		var dbProperties = (await _db.Properties.GetAllByEndpointIdAsync(endpointId.Value, ct))
 			.ToDictionary(p => p.Name, p => new PropertyRequest(p.Type, p.IsOptional));
 		
-		Dictionary<string, List<ErrorDetail>> failures = [];
+		var ruleValidator = new RuleValidator(dbProperties);
 		
-		var validatedRules = RuleValidators.Validate(
-			nameof(command.Rules), dbProperty.Type, dbProperty.Name, command.Rules, dbProperties, failures);
+		var validatedRules = ruleValidator.Validate(
+			nameof(command.Rules), dbProperty.Name, dbProperty.ToRequest(command.Rules));
 		
 		if (validatedRules is null)
 		{
-			Debug.Assert(failures.Count > 0);
-			return new ValidationException(failures);
+			Debug.Assert(!ruleValidator.IsValid);
+			return new ValidationException(ruleValidator.Failures);
 		}
 		
-		Debug.Assert(failures.Count == 0);
+		Debug.Assert(ruleValidator.IsValid);
 		
 		await _db.BeginTransactionAsync(ct);
 		

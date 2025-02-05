@@ -43,7 +43,7 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			return new ValidationException(validationResult.Errors);
 		}
 		
-		command.Deconstruct(out var endpointName, out var propertyRequest);
+		command.Deconstruct(out var endpointName, out PropertyRequestExpanded propertyReqEx);
 		
 		var userId = _user.Id();
 		
@@ -53,16 +53,16 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			return new OperationInvalidException($"Endpoint '{endpointName}' does not exist.");
 		}
 		
-		if (await _db.Properties.ExistsAsync(propertyRequest.Name, endpointId.Value, ct))
+		if (await _db.Properties.ExistsAsync(propertyReqEx.Name, endpointId.Value, ct))
 		{
 			return new OperationInvalidException(
-				$"Property with the name '{propertyRequest.Name}' already exists (case-sensitive).");
+				$"Property with the name '{propertyReqEx.Name}' already exists (case-sensitive).");
 		}
 		
 		var dbRuleNames =
 			(await _db.Rules.GetAllNamesAsync(endpointId.Value, ct)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 		
-		var duplicateRule = propertyRequest.Rules.FirstOrDefault(r => dbRuleNames.Contains(r.Name));
+		var duplicateRule = propertyReqEx.Rules.FirstOrDefault(r => dbRuleNames.Contains(r.Name));
 		if (duplicateRule != null)
 		{
 			return new OperationInvalidException($"Rule with the name '{duplicateRule.Name}' already exists (case-insensitive).");
@@ -71,26 +71,21 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 		var dbProperties = (await _db.Properties.GetAllByEndpointIdAsync(endpointId.Value, ct))
 			.ToDictionary(p => p.Name, p => new PropertyRequest(p.Type, p.IsOptional));
 		
-		Dictionary<string, List<ErrorDetail>> failures = [];
+		var ruleValidator = new RuleValidator(dbProperties);
 		
-		var validatedRules = RuleValidators.Validate(
-			"Property.Rules", propertyRequest.Type, propertyRequest.Name, propertyRequest.Rules, dbProperties, failures);
-		
+		var validatedRules = ruleValidator.Validate("Property.Rules", propertyReqEx.Name, propertyReqEx.ToRequest());
 		if (validatedRules is null)
 		{
-			Debug.Assert(failures.Count > 0);
-			return new ValidationException(failures);
+			return new ValidationException(ruleValidator.Failures);
 		}
-		
-		Debug.Assert(failures.Count == 0);
 		
 		var timeNow = DateTimeOffset.UtcNow;
 		
 		var property = new Property
 		{
-			Name = propertyRequest.Name,
-			Type = propertyRequest.Type,
-			IsOptional = propertyRequest.IsOptional,
+			Name = propertyReqEx.Name,
+			Type = propertyReqEx.Type,
+			IsOptional = propertyReqEx.IsOptional,
 			CreatedAt = timeNow,
 			ModifiedAt = timeNow,
 			EndpointId = endpointId.Value,

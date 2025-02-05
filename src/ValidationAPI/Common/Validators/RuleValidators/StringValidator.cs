@@ -12,7 +12,7 @@ using static ValidationAPI.Domain.Constants.ErrorCodes;
 
 namespace ValidationAPI.Common.Validators.RuleValidators;
 
-public static partial class RuleValidators
+public partial class RuleValidator
 {
 	[GeneratedRegex(@"^{(\w+)(\..+)?}$")]
 	private static partial Regex GetPropertyAndOptionRegex();

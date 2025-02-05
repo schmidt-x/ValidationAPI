@@ -43,13 +43,13 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		}
 		
 		var timeNow = DateTimeOffset.UtcNow;
-		Dictionary<string, List<ErrorDetail>> failures = [];
 		List<Property> propertiesToSave = [];
+		
+		var ruleValidator = new RuleValidator(command.Properties);
 		
 		foreach ((string propertyName, PropertyRequest property) in command.Properties)
 		{
-			var validatedRules = RuleValidators.Validate(
-				$"Properties.{propertyName}", property.Type, propertyName, property.Rules, command.Properties, failures);
+			var validatedRules = ruleValidator.Validate($"Properties.{propertyName}", propertyName, property);
 			
 			if (validatedRules is null) continue;
 			
@@ -64,9 +64,9 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 			});
 		}
 		
-		if (failures.Count != 0)
+		if (!ruleValidator.IsValid)
 		{
-			return new ValidationException(failures);
+			return new ValidationException(ruleValidator.Failures);
 		}
 		
 		var userId = _user.Id();
