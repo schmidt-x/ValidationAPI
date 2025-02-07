@@ -376,9 +376,9 @@ public class StringRuleTests
 		arrayEnumerator.MoveNext();
 		var right = arrayEnumerator.Current.GetInt32();
 		
-		string expectedValue = $"{left} {right}";
-		string? expectedRawValue = null;
-		string expectedExtraInfo = expectedValue.IndexOf(' ').ToString();
+		string expectedValue = left.ToString();
+		string expectedRawValue = value.GetRawText();
+		string expectedExtraInfo = right.ToString();
 		const RuleValueType expectedValueType = RuleValueType.Range;
 		const bool expectedIsRelative = false;
 		

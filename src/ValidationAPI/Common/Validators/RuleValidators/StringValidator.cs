@@ -60,7 +60,7 @@ public partial class RuleValidator
 						
 						case JsonValueKind.String:
 							ruleRawValue = value.GetString();
-							if (string.IsNullOrEmpty(ruleRawValue))
+							if (string.IsNullOrWhiteSpace(ruleRawValue))
 							{
 								failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Value is required.");
 								continue;
@@ -236,8 +236,9 @@ public partial class RuleValidator
 					}
 					if (failures.Count != 0) continue;
 					
-					ruleValue = $"{lNum} {rNum}";
-					ruleExtraInfo = ruleValue.IndexOf(' ').ToString();
+					ruleValue = lNum.ToString();
+					ruleRawValue = value.GetRawText();
+					ruleExtraInfo = rNum.ToString();
 					ruleValueType = RuleValueType.Range;
 					break;
 				

@@ -71,20 +71,20 @@ public static partial class PropertyValidators
 	
 	private static string? StringBetween(string actual, string expected, Rule rule)
 	{
-		ExtractRange(rule, out var expected1, out var expected2);
+		string expected2 = rule.ExtraInfo!;
 		
-		return actual.Length >= long.Parse(expected1) && actual.Length <= long.Parse(expected2)
+		return actual.Length >= int.Parse(expected) && actual.Length <= int.Parse(expected2)
 			? null
-			: StringFormatRangeMessage(actual, expected1.ToString(), expected2.ToString(), rule.ErrorMessage);
+			: StringFormatRangeMessage(actual, expected, expected2, rule.ErrorMessage);
 	}
 	
 	private static string? StringOutside(string actual, string expected, Rule rule)
 	{
-		ExtractRange(rule, out var expected1, out var expected2);
+		string expected2 = rule.ExtraInfo!;
 		
-		return actual.Length < long.Parse(expected1) || actual.Length > long.Parse(expected2)
+		return actual.Length < int.Parse(expected) || actual.Length > int.Parse(expected2)
 			? null
-			: StringFormatRangeMessage(actual, expected1.ToString(), expected2.ToString(), rule.ErrorMessage);
+			: StringFormatRangeMessage(actual, expected, expected2, rule.ErrorMessage);
 	}
 	
 	private static string? StringRegex(string actual, string expected, Rule rule)
@@ -94,7 +94,7 @@ public static partial class PropertyValidators
 		=> actual.Contains('@') ? null : StringFormatMessage(actual, rule);
 	
 	
-	private static long Compare(string actual, string expected, Rule rule)
+	private static int Compare(string actual, string expected, Rule rule)
 	{
 		return rule.ExtraInfo is null
 			? string.CompareOrdinal(actual, expected)
@@ -116,12 +116,6 @@ public static partial class PropertyValidators
 				RuleExtraInfo.CaseI => actual.Equals(expected, StringComparison.OrdinalIgnoreCase),
 				_ => throw new NotImplementedException()
 			};
-	}
-	
-	private static void ExtractRange(Rule rule, out ReadOnlySpan<char> expected1, out ReadOnlySpan<char> expected2)
-	{
-		var index = int.Parse(rule.ExtraInfo!);
-		expected1 = rule.Value.AsSpan(0, index); expected2 = rule.Value.AsSpan(index+1);
 	}
 	
 	private static string StringFormatMessage(string actual, Rule rule)
