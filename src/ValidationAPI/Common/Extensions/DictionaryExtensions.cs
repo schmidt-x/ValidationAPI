@@ -17,4 +17,17 @@ public static class DictionaryExtensions
 			errors.Add(key, [ new ErrorDetail(code, errorMessage) ]);
 		}
 	}
+	
+	public static void AddErrorDetail(
+		this Dictionary<string, List<ErrorDetail>> errors, string key, ErrorDetail errorDetail)
+	{
+		if (errors.TryGetValue(key, out var details))
+		{
+			details.Add(errorDetail);
+		}
+		else
+		{
+			errors.Add(key, [ errorDetail ]);
+		}
+	}
 }

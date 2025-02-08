@@ -120,31 +120,12 @@ public partial class RuleValidator
 								}
 								
 								var targetPropertyName = match.Groups[1].Value;
-								if (targetPropertyName.Equals(propertyName, StringComparison.Ordinal))
+								var errorDetail = ValidateTargetProperty(
+									propertyName, targetPropertyName, PropertyType.String, rule.Name, properties);
+								
+								if (errorDetail != null)
 								{
-									failures.AddErrorDetail(
-										failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Rule must not reference its own property.");
-									continue;
-								}
-								if (!properties.TryGetValue(targetPropertyName, out var targetProperty))
-								{
-									failures.AddErrorDetail(
-										failureKey, INVALID_RULE_VALUE,
-										$"[{rule.Name}] Target property '{targetPropertyName}' not found (case-sensitive).");
-									continue;
-								}
-								if (targetProperty.Type != PropertyType.String)
-								{
-									failures.AddErrorDetail(
-										failureKey, INVALID_RULE_VALUE,
-										$"[{rule.Name}] Target property '{targetPropertyName}' must be of the same type (String).");
-									continue;
-								}
-								if (targetProperty.IsOptional)
-								{
-									failures.AddErrorDetail(
-										failureKey, INVALID_RULE_VALUE,
-										$"[{rule.Name}] Target property '{targetPropertyName}' must not be optional.");
+									failures.AddErrorDetail(failureKey, errorDetail);
 									continue;
 								}
 								if (failures.Count != 0) continue;
@@ -212,19 +193,20 @@ public partial class RuleValidator
 					if (left.ValueKind != JsonValueKind.Number || left.ValueKind != right.ValueKind)
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Both values must be of the same type Number (Int32).");
+							failureKey, INVALID_RULE_VALUE,
+							$"[{rule.Name}] Both values must be of the same type 'Json.Number' representing valid Int32 values.");
 						continue;
 					}
 					if (!left.TryGetInt32(out var lNum))
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The lower bound is not a valid Number (Int32).");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The lower bound is not a valid Int32 value.");
 						continue;
 					}
 					if (!right.TryGetInt32(out var rNum))
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The upper bound is not a valid Number (Int32).");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The upper bound is not a valid Int32 value.");
 						continue;
 					}
 					if (lNum >= rNum)
@@ -301,4 +283,38 @@ public partial class RuleValidator
 	
 	private static string InvalidValueTypeMessage(string ruleName, string expectedTypes, string actualType)
 		=> $"[{ruleName}] Value must be one of the following types: {expectedTypes}; got: {actualType}.";
+	
+	private static ErrorDetail? ValidateTargetProperty(
+		string propertyName,
+		string targetPropertyName,
+		PropertyType propertyType,
+		string ruleName,
+		Dictionary<string, PropertyRequest> properties)
+	{
+		if (propertyName.Equals(targetPropertyName, StringComparison.Ordinal))
+		{
+			return new ErrorDetail(INVALID_RULE_VALUE, $"[{ruleName}] Rule must not reference its own property.");
+		}
+		
+		if (!properties.TryGetValue(targetPropertyName, out var targetProperty))
+		{
+			return new ErrorDetail(
+				INVALID_RULE_VALUE, $"[{ruleName}] Target property '{targetPropertyName}' not found (case-sensitive).");
+		}
+		
+		if (targetProperty.Type != propertyType)
+		{
+			return new ErrorDetail(
+				INVALID_RULE_VALUE,
+				$"[{ruleName}] Target property '{targetPropertyName}' must be of the same type ({propertyType}).");
+		}
+		
+		if (targetProperty.IsOptional)
+		{
+			return new ErrorDetail(
+				INVALID_RULE_VALUE, $"[{ruleName}] Target property '{targetPropertyName}' must not be optional.");
+		}
+		
+		return null;
+	}
 }
