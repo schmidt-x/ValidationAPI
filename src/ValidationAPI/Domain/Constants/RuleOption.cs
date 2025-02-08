@@ -6,7 +6,7 @@ public static class RuleOption
 	public const string ByLength = ".Length";
 	public const string ByLengthNormalized = ".LENGTH";
 	
-	public const string CaseIPostfix = ".case:i";
+	public const string CaseIPostfix = ".Case:i";
 	public const string CaseINormalizedPostfix = ".CASE:I";
 	
 	public const string CaseIPrefix = "i:";

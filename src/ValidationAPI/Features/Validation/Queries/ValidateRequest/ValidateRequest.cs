@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using ArgumentOutOfRangeException = System.ArgumentOutOfRangeException;
 using FluentValidation;
-using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Common.Services;
 using ValidationAPI.Common.Exceptions;
 using ValidationAPI.Data;
-using ValidationAPI.Domain.Entities;
-using ValidationAPI.Domain.Enums;
 using ValidationAPI.Features.Infra;
-using ValidationAPI.Features.Validation.Models;
 using ValidationAPI.Features.Validation.Validators;
-using static ValidationAPI.Domain.Constants.ErrorCodes;
 using ValidationException = ValidationAPI.Common.Exceptions.ValidationException;
 
 namespace ValidationAPI.Features.Validation.Queries.ValidateRequest;
@@ -38,6 +33,8 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 	
 	public async Task<Result<ValidationResult>> Handle(ValidateRequestQuery query, CancellationToken ct)
 	{
+		var now = DateTimeOffset.UtcNow;
+		
 		if (!_validator.Validate(query).IsValid)
 		{
 			return new NotFoundException();
@@ -56,30 +53,16 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 		var unvalidatedProperties = PropertyValidators.ValidateTypes(dbProperties, query.Body, failures);
 		if (unvalidatedProperties is null)
 		{
+			Debug.Assert(failures.Count > 0);
 			return new ValidationException(failures);
 		}
 		
-		var dbRules = await _db.Rules.GetAllByPropertyIdAsync(unvalidatedProperties.Select(x => x.Id), ct);
+		Debug.Assert(failures.Count == 0);
+		
+		var dbRules = await _db.Rules.GetAllByPropertyIdAsync(unvalidatedProperties.Select(x => x.Value.Id), ct);
 		var sortedRules = dbRules.GroupBy(r => r.PropertyId).ToDictionary(x => x.Key, x => x.ToArray());
 		
-		foreach (var property in unvalidatedProperties)
-		{
-			if (!sortedRules.TryGetValue(property.Id, out var rules))
-				continue; // no rules for a property
-			
-			PropertyValidator validator = property.Type switch
-			{
-				PropertyType.String   => PropertyValidators.ValidateString,
-				PropertyType.Int      => throw new NotImplementedException(),
-				PropertyType.Float    => throw new NotImplementedException(),
-				PropertyType.DateTime => throw new NotImplementedException(),
-				PropertyType.DateOnly => throw new NotImplementedException(),
-				PropertyType.TimeOnly => throw new NotImplementedException(),
-				_ => throw new ArgumentOutOfRangeException(nameof(query))
-			};
-			
-			validator.Invoke(property, rules, query.Body, failures);
-		}
+		PropertyValidators.Validate(unvalidatedProperties, sortedRules, failures, now);
 		
 		int propertiesProcessed = unvalidatedProperties.Count;
 		int rulesApplied = dbRules.Count;
@@ -88,11 +71,4 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 			? ValidationResult.Success(propertiesProcessed, rulesApplied)
 			: ValidationResult.Failure(propertiesProcessed, rulesApplied, failures);
 	}
-	
-	
-	private delegate void PropertyValidator(
-		UnvalidatedProperty property,
-		Rule[] rules,
-		Dictionary<string, JsonElement> requestBody,
-		Dictionary<string, List<ErrorDetail>> failures);
 }

@@ -10,8 +10,41 @@ using static ValidationAPI.Domain.Constants.ErrorCodes;
 
 namespace ValidationAPI.Features.Validation.Validators;
 
+file delegate void Validator(
+	UnvalidatedProperty property,
+	Rule[] rules,
+	Dictionary<string, UnvalidatedProperty> properties,
+	Dictionary<string, List<ErrorDetail>> failures,
+	DateTimeOffset now);
+
 public static partial class PropertyValidators
 {
+	public static void Validate(
+		Dictionary<string, UnvalidatedProperty> properties,
+		Dictionary<int, Rule[]> rules,
+		Dictionary<string, List<ErrorDetail>> failures,
+		DateTimeOffset now)
+	{
+		foreach ((_, UnvalidatedProperty property) in properties)
+		{
+			if (!rules.TryGetValue(property.Id, out var propertyRules))
+				continue; // no rules for a property
+			
+			Validator validator = property.Type switch
+			{
+				PropertyType.Int      => throw new NotImplementedException(),
+				PropertyType.Float    => throw new NotImplementedException(),
+				PropertyType.String   => ValidateString,
+				PropertyType.DateTime => throw new NotImplementedException(),
+				PropertyType.DateOnly => throw new NotImplementedException(),
+				PropertyType.TimeOnly => throw new NotImplementedException(),
+				_ => throw new ArgumentOutOfRangeException(nameof(rules))
+			};
+			
+			validator.Invoke(property, propertyRules, properties, failures, now);
+		}
+	}
+	
 	public static Dictionary<string, UnvalidatedProperty>? ValidateTypes(
 		List<Property> dbProperties,
 		Dictionary<string, JsonElement> requestProperties,

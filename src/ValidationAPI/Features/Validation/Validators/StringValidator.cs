@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
@@ -15,13 +14,21 @@ file delegate string? Validator(string actual, string expected, Rule rule);
 
 public static partial class PropertyValidators
 {
+	// Wrapper method to allow compatibility with delegates that require an additional 'DateTimeOffset' parameter
 	public static void ValidateString(
 		UnvalidatedProperty property,
 		Rule[] rules,
-		Dictionary<string, JsonElement> requestBody,
+		Dictionary<string, UnvalidatedProperty> properties,
+		Dictionary<string, List<ErrorDetail>> failures,
+		DateTimeOffset _) => ValidateString(property, rules, properties, failures);
+	
+	public static void ValidateString(
+		UnvalidatedProperty property,
+		Rule[] rules,
+		Dictionary<string, UnvalidatedProperty> properties,
 		Dictionary<string, List<ErrorDetail>> failures)
 	{
-		var requestValue = property.Value.GetString()!;
+		var actual = (string)property.Value;
 		
 		foreach (var rule in rules)
 		{
@@ -40,9 +47,9 @@ public static partial class PropertyValidators
 				_ => throw new ArgumentOutOfRangeException(nameof(rules))
 			};
 			
-			string? errorMessage = validator.Invoke(
-				requestValue, rule.IsRelative ? requestBody[rule.Value].GetString()! : rule.Value, rule);
+			var expected = rule.IsRelative ? (string)properties[rule.Value].Value : rule.Value;
 			
+			var errorMessage = validator.Invoke(actual, expected, rule);
 			if (errorMessage != null)
 			{
 				failures.AddErrorDetail(property.Name, rule.Name, errorMessage);
@@ -52,22 +59,22 @@ public static partial class PropertyValidators
 	
 	
 	private static string? StringLess(string actual, string expected, Rule rule)
-		=> Compare(actual, expected, rule) < 0 ? null : StringFormatMessage(actual, rule);
+		=> StringCompare(actual, expected, rule) < 0 ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringMore(string actual, string expected, Rule rule)
-		=> Compare(actual, expected, rule) > 0 ? null : StringFormatMessage(actual, rule);
+		=> StringCompare(actual, expected, rule) > 0 ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringLessOrEqual(string actual, string expected, Rule rule)
-		=> Compare(actual, expected, rule) <= 0 ? null : StringFormatMessage(actual, rule);
+		=> StringCompare(actual, expected, rule) <= 0 ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringMoreOrEqual(string actual, string expected, Rule rule)
-		=> Compare(actual, expected, rule) >= 0 ? null : StringFormatMessage(actual, rule);
+		=> StringCompare(actual, expected, rule) >= 0 ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringEqual(string actual, string expected, Rule rule)
-		=> IsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
+		=> StringIsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringNotEqual(string actual, string expected, Rule rule)
-		=> !IsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
+		=> !StringIsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
 	
 	private static string? StringBetween(string actual, string expected, Rule rule)
 	{
@@ -94,7 +101,7 @@ public static partial class PropertyValidators
 		=> actual.Contains('@') ? null : StringFormatMessage(actual, rule);
 	
 	
-	private static int Compare(string actual, string expected, Rule rule)
+	private static int StringCompare(string actual, string expected, Rule rule)
 	{
 		return rule.ExtraInfo is null
 			? string.CompareOrdinal(actual, expected)
@@ -106,7 +113,7 @@ public static partial class PropertyValidators
 			};
 	}
 	
-	private static bool IsEqual(string actual, string expected, Rule rule)
+	private static bool StringIsEqual(string actual, string expected, Rule rule)
 	{
 		return rule.ExtraInfo is null
 			? actual.Equals(expected, StringComparison.Ordinal)
@@ -121,8 +128,10 @@ public static partial class PropertyValidators
 	private static string StringFormatMessage(string actual, Rule rule)
 		=> rule.ErrorMessage?
 				.Replace(MessagePlaceholders.Value, rule.Value, StringComparison.OrdinalIgnoreCase)
-				.Replace(MessagePlaceholders.ActualValue, rule.ExtraInfo == RuleExtraInfo.ByLength
-					? actual.Length.ToString() : actual, StringComparison.OrdinalIgnoreCase)
+				.Replace(
+					MessagePlaceholders.ActualValue,
+					rule.ExtraInfo == RuleExtraInfo.ByLength ? actual.Length.ToString() : actual,
+					StringComparison.OrdinalIgnoreCase)
 				?? string.Empty;
 	
 	private static string StringFormatRangeMessage(string actual, string expected1, string expected2, string? message)
