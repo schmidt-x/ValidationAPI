@@ -29,8 +29,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 	private readonly IRepositoryContext _db;
 	private readonly IUser _user;
 	
-	public ValidateRequestQueryHandler(
-		IValidator<ValidateRequestQuery> validator, IUser user, IRepositoryContext db)
+	public ValidateRequestQueryHandler(IValidator<ValidateRequestQuery> validator, IUser user, IRepositoryContext db)
 	{
 		_validator = validator;
 		_user = user;
@@ -50,56 +49,12 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 			return new NotFoundException();
 		}
 		
-		Dictionary<string, List<ErrorDetail>> failures = [];
-		List<UnvalidatedProperty> unvalidatedProperties = [];
-		
 		var dbProperties = await _db.Properties.GetAllByEndpointIdAsync(endpointId.Value, ct);
 		
-		foreach (var dbProperty in dbProperties)
-		{
-			if (!query.Body.TryGetValue(dbProperty.Name, out var requestValue))
-			{
-				if (!dbProperty.IsOptional)
-				{
-					failures.AddErrorDetail(dbProperty.Name, PROPERTY_NOT_PRESENT,
-						$"Property is not present (type '{dbProperty.Type}'). Consider making it optional.");
-				}
-				continue;
-			}
-			
-			switch (dbProperty.Type)
-			{
-				case PropertyType.Int:
-				case PropertyType.Float:
-					if (requestValue.ValueKind != JsonValueKind.Number)
-					{
-						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE, 
-							$"Expected value kind is 'Number'; got: '{requestValue.ValueKind}'.");
-						continue;
-					}
-					break;
-				case PropertyType.String:
-				case PropertyType.DateTime:
-				case PropertyType.DateOnly:
-				case PropertyType.TimeOnly:
-					if (requestValue.ValueKind != JsonValueKind.String)
-					{
-						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE,
-							$"Expected value kind is 'String'; got: '{requestValue.ValueKind}'.");
-						continue;
-					}
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(query));
-			}
-			
-			if (failures.Count != 0) continue;
-			
-			unvalidatedProperties.Add(
-				new UnvalidatedProperty(dbProperty.Id, dbProperty.Name, dbProperty.Type, requestValue));
-		}
+		Dictionary<string, List<ErrorDetail>> failures = [];
 		
-		if (failures.Count != 0)
+		var unvalidatedProperties = PropertyValidators.ValidateTypes(dbProperties, query.Body, failures);
+		if (unvalidatedProperties is null)
 		{
 			return new ValidationException(failures);
 		}
