@@ -10,4 +10,7 @@ public static class RuleOption
 	public const string CaseINormalizedPostfix = ".CASE:I";
 	
 	public const string CaseIPrefix = "i:";
+	
+	// dateTime options
+	public const string Now = "now";
 }

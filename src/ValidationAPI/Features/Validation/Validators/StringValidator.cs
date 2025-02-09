@@ -15,14 +15,14 @@ file delegate string? Validator(string actual, string expected, Rule rule);
 public static partial class PropertyValidators
 {
 	// Wrapper method to allow compatibility with delegates that require an additional 'DateTimeOffset' parameter
-	public static void ValidateString(
+	private static void ValidateString(
 		UnvalidatedProperty property,
 		Rule[] rules,
 		Dictionary<string, UnvalidatedProperty> properties,
 		Dictionary<string, List<ErrorDetail>> failures,
 		DateTimeOffset _) => ValidateString(property, rules, properties, failures);
 	
-	public static void ValidateString(
+	private static void ValidateString(
 		UnvalidatedProperty property,
 		Rule[] rules,
 		Dictionary<string, UnvalidatedProperty> properties,

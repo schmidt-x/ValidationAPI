@@ -200,20 +200,20 @@ public partial class RuleValidator
 					if (!left.TryGetInt32(out var lNum))
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The lower bound is not a valid Int32 value.");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (lower bound).");
 						continue;
 					}
 					if (!right.TryGetInt32(out var rNum))
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] The upper bound is not a valid Int32 value.");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (upper bound).");
 						continue;
 					}
 					if (lNum >= rNum)
 					{
 						failures.AddErrorDetail(
 							failureKey, INVALID_RULE_VALUE,
-							$"[{rule.Name}] The lower bound cannot be equal to or greater than the upper bound.");
+							$"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
 						continue;
 					}
 					if (failures.Count != 0) continue;
