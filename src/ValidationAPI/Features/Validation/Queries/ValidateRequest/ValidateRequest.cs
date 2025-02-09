@@ -50,7 +50,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 		
 		Dictionary<string, List<ErrorDetail>> failures = [];
 		
-		var unvalidatedProperties = PropertyValidators.ValidateTypes(dbProperties, query.Body, failures);
+		var unvalidatedProperties = PropertyValidator.ValidateTypes(dbProperties, query.Body, failures);
 		if (unvalidatedProperties is null)
 		{
 			Debug.Assert(failures.Count > 0);
@@ -62,7 +62,7 @@ public class ValidateRequestQueryHandler : RequestHandlerBase
 		var dbRules = await _db.Rules.GetAllByPropertyIdAsync(unvalidatedProperties.Select(x => x.Value.Id), ct);
 		var sortedRules = dbRules.GroupBy(r => r.PropertyId).ToDictionary(x => x.Key, x => x.ToArray());
 		
-		PropertyValidators.Validate(unvalidatedProperties, sortedRules, failures, now);
+		PropertyValidator.Validate(unvalidatedProperties, sortedRules, failures, now);
 		
 		int propertiesProcessed = unvalidatedProperties.Count;
 		int rulesApplied = dbRules.Count;

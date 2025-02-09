@@ -17,7 +17,7 @@ file delegate void Validator(
 	Dictionary<string, List<ErrorDetail>> failures,
 	DateTimeOffset now);
 
-public static partial class PropertyValidators
+public static partial class PropertyValidator
 {
 	public static void Validate(
 		Dictionary<string, UnvalidatedProperty> properties,
@@ -35,7 +35,7 @@ public static partial class PropertyValidators
 				PropertyType.Int      => throw new NotImplementedException(),
 				PropertyType.Float    => throw new NotImplementedException(),
 				PropertyType.String   => ValidateString,
-				PropertyType.DateTime => throw new NotImplementedException(),
+				PropertyType.DateTime => ValidateDateTime,
 				PropertyType.DateOnly => throw new NotImplementedException(),
 				PropertyType.TimeOnly => throw new NotImplementedException(),
 				_ => throw new ArgumentOutOfRangeException(nameof(rules))

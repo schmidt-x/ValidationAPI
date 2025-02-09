@@ -12,7 +12,7 @@ namespace ValidationAPI.Features.Validation.Validators;
 
 file delegate string? Validator(string actual, string expected, Rule rule);
 
-public static partial class PropertyValidators
+public static partial class PropertyValidator
 {
 	// Wrapper method to allow compatibility with delegates that require an additional 'DateTimeOffset' parameter
 	private static void ValidateString(
