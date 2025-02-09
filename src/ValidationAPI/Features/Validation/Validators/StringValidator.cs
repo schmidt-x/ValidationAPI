@@ -82,7 +82,7 @@ public static partial class PropertyValidators
 		
 		return actual.Length >= int.Parse(expected) && actual.Length <= int.Parse(expected2)
 			? null
-			: StringFormatRangeMessage(actual, expected, expected2, rule.ErrorMessage);
+			: StringFormatRangeMessage(actual, rule);
 	}
 	
 	private static string? StringOutside(string actual, string expected, Rule rule)
@@ -91,7 +91,7 @@ public static partial class PropertyValidators
 		
 		return actual.Length < int.Parse(expected) || actual.Length > int.Parse(expected2)
 			? null
-			: StringFormatRangeMessage(actual, expected, expected2, rule.ErrorMessage);
+			: StringFormatRangeMessage(actual, rule);
 	}
 	
 	private static string? StringRegex(string actual, string expected, Rule rule)
@@ -134,10 +134,10 @@ public static partial class PropertyValidators
 					StringComparison.OrdinalIgnoreCase)
 				?? string.Empty;
 	
-	private static string StringFormatRangeMessage(string actual, string expected1, string expected2, string? message)
-		=> message?
-				.Replace(MessagePlaceholders.Value1, expected1, StringComparison.OrdinalIgnoreCase)
-				.Replace(MessagePlaceholders.Value2, expected2, StringComparison.OrdinalIgnoreCase)
+	private static string StringFormatRangeMessage(string actual, Rule rule)
+		=> rule.ErrorMessage?
+				.Replace(MessagePlaceholders.Value1, rule.Value, StringComparison.OrdinalIgnoreCase)
+				.Replace(MessagePlaceholders.Value2, rule.ExtraInfo, StringComparison.OrdinalIgnoreCase)
 				.Replace(MessagePlaceholders.ActualValue, actual.Length.ToString(), StringComparison.OrdinalIgnoreCase)
 				?? string.Empty;
 }
