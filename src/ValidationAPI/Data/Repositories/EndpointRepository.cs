@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using ValidationAPI.Data.Extensions;
 using ValidationAPI.Domain.Entities;
+using ValidationAPI.Domain.Enums;
 using ValidationAPI.Domain.Models;
 using Rule = ValidationAPI.Domain.Entities.Rule;
 
@@ -119,19 +121,29 @@ public class EndpointRepository : RepositoryBase, IEndpointRepository
 		return queryResult.First().ToExpandedResponse(responseProperties);
 	}
 	
-	public async Task<List<EndpointResponse>> GetAllResponsesAsync(Guid userId, CancellationToken ct)
+	public async Task<int> CountAsync(Guid userId, CancellationToken ct)
 	{
-		const string query = """
+		const string query = "select count(*) from endpoints where user_id = @UserId";
+		
+		var command = new CommandDefinition(query, new { userId }, Transaction, cancellationToken: ct);
+		
+		return await Connection.ExecuteScalarAsync<int>(command);
+	}
+	
+	public async Task<List<EndpointResponse>> GetAllResponsesAsync(
+		Guid userId, int? take, int? offset, EndpointOrder? orderBy, bool desc, CancellationToken ct)
+	{
+		string query = $"""
 			SELECT name, description, created_at, modified_at
 			FROM endpoints
-			WHERE user_id = @UserId;
+			WHERE user_id = @UserId
+			ORDER BY {orderBy?.ToDbName() ?? "id"} {(desc ? "DESC" : "ASC")}
+			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0};
 			""";
 		
 		var command = new CommandDefinition(query, new { userId }, Transaction, cancellationToken: ct);
 		
-		var endpoints = await Connection.QueryAsync<EndpointResponse>(command);
-		
-		return (List<EndpointResponse>)endpoints;
+		return (List<EndpointResponse>)await Connection.QueryAsync<EndpointResponse>(command);
 	}
 	
 	public async Task<EndpointResponse> RenameAsync(

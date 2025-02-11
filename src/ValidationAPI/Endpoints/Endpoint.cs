@@ -43,7 +43,7 @@ public class Endpoint : EndpointGroupBase
 		
 		g.MapGet("", GetAll)
 			.WithSummary("Returns all endpoints")
-			.Produces<IReadOnlyCollection<EndpointResponse>>()
+			.Produces<PaginatedList<EndpointResponse>>()
 			.Produces(StatusCodes.Status401Unauthorized);
 		
 		g.MapPatch("{endpoint}/name", Rename)
@@ -91,12 +91,15 @@ public class Endpoint : EndpointGroupBase
 	}
 	
 	public static async Task<IResult> GetAll(
-		GetEndpointsQueryHandler handler,
-		CancellationToken ct)
+		[AsParameters] GetEndpointsRequest request, GetEndpointsQueryHandler handler, CancellationToken ct)
 	{
-		var endpoints = await handler.Handle(ct);
+		var query = new GetEndpointsQuery(
+			request.PageNumber ?? 1,
+			request.PageSize ?? 50,
+			request.OrderBy,
+			request.Desc ?? false);
 		
-		return Results.Ok(endpoints);
+		return Results.Ok(await handler.Handle(query, ct));
 	}
 	
 	public static async Task<IResult> Rename(

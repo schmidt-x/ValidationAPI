@@ -79,6 +79,7 @@ public static class IServiceCollectionExtensions
 			{
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<EndpointOrder>());
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyOrder>());
 				opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleOrder>());
 			})
@@ -86,6 +87,7 @@ public static class IServiceCollectionExtensions
 			{
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyType>());
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleType>());
+				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<EndpointOrder>());
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<PropertyOrder>());
 				opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter<RuleOrder>());
 			});
