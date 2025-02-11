@@ -14,10 +14,10 @@ namespace ValidationAPI.Common.Validators.RuleValidators;
 
 public partial class RuleValidator
 {
-	[GeneratedRegex(@"^now([+-][\d.:]{5,})?$", RegexOptions.IgnoreCase)]
+	[GeneratedRegex(@"^now([+-][\d.:]+)?$", RegexOptions.IgnoreCase)]
 	private static partial Regex NowWithOffsetRegex();
 	
-	[GeneratedRegex(@"^{(\w+)([+-][\d.:]{5,})?}$")]
+	[GeneratedRegex(@"^{(\w+)([+-][\d.:]+)?}$")]
 	private static partial Regex PropertyWithOffsetRegex();
 	
 	private static List<Rule>? ValidateDateTime(
@@ -27,6 +27,7 @@ public partial class RuleValidator
 		Dictionary<string, PropertyRequest> properties,
 		Dictionary<string, List<ErrorDetail>> failures)
 	{
+		var now = DateTimeOffset.UtcNow;
 		List<Rule> validatedRules = [];
 		
 		foreach (var rule in rules)
@@ -88,8 +89,7 @@ public partial class RuleValidator
 							}
 						}
 						var targetPropertyName = relativeMatch.Groups[1].Value;
-						var errorDetail = ValidateTargetProperty(
-							propertyName, targetPropertyName, PropertyType.DateTime, rule.Name, properties);
+						var errorDetail = ValidateTargetProperty(propertyName, targetPropertyName, PropertyType.DateTime, rule.Name, properties);
 						if (errorDetail != null)
 						{
 							failures.AddErrorDetail(failureKey, errorDetail);
@@ -186,7 +186,6 @@ public partial class RuleValidator
 						continue;
 					}
 					
-					var now = DateTimeOffset.UtcNow;
 					bool isLowerBoundDynamic = false;
 					bool isUpperBoundDynamic = false;
 					
@@ -263,8 +262,7 @@ public partial class RuleValidator
 					if (lBound >= uBound)
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE,
-							$"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
 						continue;
 					}
 					if (failures.Count != 0) continue;

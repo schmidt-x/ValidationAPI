@@ -48,8 +48,7 @@ public partial class RuleValidator
 						case JsonValueKind.Number:
 							if (!value.TryGetInt32(out var val))
 							{
-								failures.AddErrorDetail(
-									failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int32).");
+								failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value is not a valid Number (Int32).");
 								continue;
 							}
 							if (failures.Count != 0) continue;
@@ -120,9 +119,7 @@ public partial class RuleValidator
 								}
 								
 								var targetPropertyName = match.Groups[1].Value;
-								var errorDetail = ValidateTargetProperty(
-									propertyName, targetPropertyName, PropertyType.String, rule.Name, properties);
-								
+								var errorDetail = ValidateTargetProperty(propertyName, targetPropertyName, PropertyType.String, rule.Name, properties);
 								if (errorDetail != null)
 								{
 									failures.AddErrorDetail(failureKey, errorDetail);
@@ -140,8 +137,7 @@ public partial class RuleValidator
 								{
 									failures.AddErrorDetail(
 										failureKey, INVALID_RULE_VALUE, 
-										$"[{rule.Name}] No value provided after the case-insensitive option. " +
-										$"Consider prepending '\\' for exact comparison.");
+										$"[{rule.Name}] No value provided after the case-insensitive option. Consider prepending '\\' for exact comparison.");
 									continue;
 								}
 								if (failures.Count != 0) continue;
@@ -157,8 +153,7 @@ public partial class RuleValidator
 						
 						default:
 							failures.AddErrorDetail(
-								failureKey, INVALID_RULE_VALUE,
-								InvalidValueTypeMessage(rule.Name, "Number, String", value.ValueKind.ToString()));
+								failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "Number, String", value.ValueKind.ToString()));
 							continue;
 					}
 					break;
@@ -175,8 +170,7 @@ public partial class RuleValidator
 					var arrayLength = value.GetArrayLength();
 					if (arrayLength != 2)
 					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Array must contain 2 elements; got: {arrayLength}.");
+						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Array must contain 2 elements; got: {arrayLength}.");
 						continue;
 					}
 					
@@ -199,21 +193,18 @@ public partial class RuleValidator
 					}
 					if (!left.TryGetInt32(out var lNum))
 					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (lower bound).");
+						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (lower bound).");
 						continue;
 					}
 					if (!right.TryGetInt32(out var rNum))
 					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (upper bound).");
+						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid Int32 (upper bound).");
 						continue;
 					}
 					if (lNum >= rNum)
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE,
-							$"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
+							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
 						continue;
 					}
 					if (failures.Count != 0) continue;
@@ -228,8 +219,7 @@ public partial class RuleValidator
 					if (value.ValueKind != JsonValueKind.String)
 					{
 						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE,
-							InvalidValueTypeMessage(rule.Name, "String", value.ValueKind.ToString()));
+							failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "String", value.ValueKind.ToString()));
 						continue;
 					}
 					var regExp = value.GetString();
@@ -305,14 +295,12 @@ public partial class RuleValidator
 		if (targetProperty.Type != propertyType)
 		{
 			return new ErrorDetail(
-				INVALID_RULE_VALUE,
-				$"[{ruleName}] Target property '{targetPropertyName}' must be of the same type ({propertyType}).");
+				INVALID_RULE_VALUE, $"[{ruleName}] Target property '{targetPropertyName}' must be of the same type ({propertyType}).");
 		}
 		
 		if (targetProperty.IsOptional)
 		{
-			return new ErrorDetail(
-				INVALID_RULE_VALUE, $"[{ruleName}] Target property '{targetPropertyName}' must not be optional.");
+			return new ErrorDetail(INVALID_RULE_VALUE, $"[{ruleName}] Target property '{targetPropertyName}' must not be optional.");
 		}
 		
 		return null;

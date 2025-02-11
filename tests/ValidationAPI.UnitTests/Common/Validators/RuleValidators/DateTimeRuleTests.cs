@@ -45,9 +45,9 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("now", "+00:05")]
-	[InlineData("now", "-00:05")]
-	[InlineData("now", null)] // 'now' with no offset
+	[InlineData("noW", "+00:05")]
+	[InlineData("nOw", "-00:05")]
+	[InlineData("NoW", null)] // 'now' with no offset
 	public void ShouldSucceed_NowWithOffset(string now, string? offset)
 	{
 		// Arrange
@@ -84,13 +84,13 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("Username", "+00:05")]
-	[InlineData("Username", "-00:05")]
-	[InlineData("Username", null)]  // 'relative' with no offset
-	public void ShouldSucceed_RelativeWithOffset(string targetPropertyName, string? offset)
+	[InlineData("+00:05")]
+	[InlineData("-00:05")]
+	[InlineData(null)]  // no offset
+	public void ShouldSucceed_RelativeWithOffset(string? offset)
 	{
 		// Arrange
-		
+		const string targetPropertyName = "Username";
 		var value = TestHelpers.GetJsonProperty($"\"{{{targetPropertyName}{offset}}}\"");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Equal, value, "") ];
