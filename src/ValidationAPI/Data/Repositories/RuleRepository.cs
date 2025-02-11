@@ -222,7 +222,7 @@ public class RuleRepository : RepositoryBase, IRuleRepository
 			INNER JOIN rules r ON r.property_id = p.id
 			WHERE {condition}
 			ORDER BY {orderBy?.ToDbName() ?? "r.id"} {(desc ? "DESC" : "ASC")}
-			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0}
+			LIMIT {(take.HasValue ? take.Value.ToString() : "ALL")} OFFSET {offset ?? 0};
 			""";
 		
 		var command = NewCommandDefinition(query, parameters, ct);

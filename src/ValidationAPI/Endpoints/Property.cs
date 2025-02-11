@@ -119,9 +119,13 @@ public class Property : EndpointGroupBase
 	}
 	
 	public async Task<IResult> UpdateName(
-		[AsParameters] PropertyUpdateNameRequest request, UpdateNameCommandHandler handler, CancellationToken ct)
+		[FromRoute] string property,
+		[FromQuery] string endpoint,
+		[FromForm] string newName,
+		UpdateNameCommandHandler handler,
+		CancellationToken ct)
 	{
-		var command = new UpdateNameCommand(request.Property, request.Endpoint, request.NewName);
+		var command = new UpdateNameCommand(property, endpoint, newName);
 		Result<PropertyMinimalResponse> result = await handler.Handle(command, ct);
 		
 		return result.Match(
@@ -134,11 +138,13 @@ public class Property : EndpointGroupBase
 	}
 	
 	public async Task<IResult> UpdateOptionality(
-		[AsParameters] PropertyUpdateOptionalityRequest request,
+		[FromRoute] string property,
+		[FromQuery] string endpoint,
+		[FromForm] bool isOptional,
 		UpdateOptionalityCommandHandler handler,
 		CancellationToken ct)
 	{
-		var command = new UpdateOptionalityCommand(request.Property, request.Endpoint, request.IsOptional);
+		var command = new UpdateOptionalityCommand(property, endpoint, isOptional);
 		Result<PropertyMinimalResponse> result = await handler.Handle(command, ct);
 		
 		return result.Match(
