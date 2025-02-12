@@ -9,7 +9,7 @@ using ValidationAPI.Features.Validation.Models;
 
 namespace ValidationAPI.Features.Validation.Validators;
 
-file delegate string? Validator(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule);
+file delegate bool Validator(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule);
 
 public static partial class PropertyValidator
 {
@@ -41,44 +41,43 @@ public static partial class PropertyValidator
 			
 			var expected = rule.IsRelative ? (DateTimeOffset?)properties[rule.Value].Value : null;
 			
-			var errorMessage = validator.Invoke(actual, expected, now, rule);
-			if (errorMessage != null)
-			{
-				failures.AddErrorDetail(property.Name, rule.Name, errorMessage);
-			}
+			bool isValid = validator.Invoke(actual, expected, now, rule);
+			if (isValid) continue;
+			
+			failures.AddErrorDetail(property.Name, rule.Name, DateTimeFormatMessage(actual, rule));
 		}
 	}
 	
-	private static string? DateTimeLess(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) < 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeLess(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) < 0;
 	
-	private static string? DateTimeMore(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) > 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeMore(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) > 0;
 	
-	private static string? DateTimeLessOrEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) <= 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeLessOrEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) <= 0;
 	
-	private static string? DateTimeMoreOrEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) >= 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeMoreOrEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) >= 0;
 
-	private static string? DateTimeEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) == 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) == 0;
 	
-	private static string? DateTimeNotEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
-		=> DateTimeCompare(actual, expected, now, rule) != 0 ? null : DateTimeFormatMessage(actual, rule);
+	private static bool DateTimeNotEqual(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
+		=> DateTimeCompare(actual, expected, now, rule) != 0;
 	
-	private static string? DateTimeBetween(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
+	private static bool DateTimeBetween(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
 	{
 		var lower = DateTimeExtractRange(rule.Value, now);
 		var upper = DateTimeExtractRange(rule.ExtraInfo!, now);
-		return actual >= lower && actual <= upper ? null : DateTimeFormatRangeMessage(actual, rule);
+		return actual >= lower && actual <= upper;
 	}
 	
-	private static string? DateTimeOutside(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
+	private static bool DateTimeOutside(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
 	{
 		var lower = DateTimeExtractRange(rule.Value, now);
 		var upper = DateTimeExtractRange(rule.ExtraInfo!, now);
-		return actual < lower || actual > upper ? null : DateTimeFormatRangeMessage(actual, rule);
+		return actual < lower || actual > upper;
 	}
 	
 	
@@ -101,21 +100,20 @@ public static partial class PropertyValidator
 		return now.Add(TimeSpan.Parse(value.AsSpan(startIndex)));
 	}
 	
-	private static string DateTimeFormatMessage(DateTimeOffset actual, Rule rule)
+	private static string DateTimeFormatMessage<T>(T actual, Rule rule) where T : struct
 	{
-		var expected = rule.IsRelative ? rule.Value : rule.RawValue ?? rule.Value;
+		if (rule.Type is RuleType.Between or RuleType.Outside)
+		{
+			return rule.ErrorMessage?
+				.Replace(MessagePlaceholders.Value1, rule.Value, StringComparison.OrdinalIgnoreCase)
+				.Replace(MessagePlaceholders.Value2, rule.ExtraInfo!, StringComparison.OrdinalIgnoreCase)
+				.Replace(MessagePlaceholders.ActualValue, actual.ToString(), StringComparison.OrdinalIgnoreCase)
+				?? string.Empty;
+		}
 		
+		var expected = rule.IsRelative ? rule.Value : rule.RawValue ?? rule.Value;
 		return rule.ErrorMessage?
 			.Replace(MessagePlaceholders.Value, expected, StringComparison.OrdinalIgnoreCase)
-			.Replace(MessagePlaceholders.ActualValue, actual.ToString(), StringComparison.OrdinalIgnoreCase)
-			?? string.Empty;
-	}
-	
-	private static string DateTimeFormatRangeMessage(DateTimeOffset actual, Rule rule)
-	{
-		return rule.ErrorMessage?
-			.Replace(MessagePlaceholders.Value1, rule.Value, StringComparison.OrdinalIgnoreCase)
-			.Replace(MessagePlaceholders.Value2, rule.ExtraInfo!, StringComparison.OrdinalIgnoreCase)
 			.Replace(MessagePlaceholders.ActualValue, actual.ToString(), StringComparison.OrdinalIgnoreCase)
 			?? string.Empty;
 	}

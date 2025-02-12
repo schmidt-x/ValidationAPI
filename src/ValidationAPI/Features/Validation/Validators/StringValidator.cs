@@ -10,7 +10,7 @@ using ValidationAPI.Features.Validation.Models;
 
 namespace ValidationAPI.Features.Validation.Validators;
 
-file delegate string? Validator(string actual, string expected, Rule rule);
+file delegate bool Validator(string actual, string expected, Rule rule);
 
 public static partial class PropertyValidator
 {
@@ -49,56 +49,41 @@ public static partial class PropertyValidator
 			
 			var expected = rule.IsRelative ? (string)properties[rule.Value].Value : rule.Value;
 			
-			var errorMessage = validator.Invoke(actual, expected, rule);
-			if (errorMessage != null)
-			{
-				failures.AddErrorDetail(property.Name, rule.Name, errorMessage);
-			}
+			var isValid = validator.Invoke(actual, expected, rule);
+			if (isValid) continue;
+			
+			failures.AddErrorDetail(property.Name, rule.Name, StringFormatMessage(actual, rule));
 		}
 	}
 	
 	
-	private static string? StringLess(string actual, string expected, Rule rule)
-		=> StringCompare(actual, expected, rule) < 0 ? null : StringFormatMessage(actual, rule);
+	private static bool StringLess(string actual, string expected, Rule rule) => StringCompare(actual, expected, rule) < 0;
 	
-	private static string? StringMore(string actual, string expected, Rule rule)
-		=> StringCompare(actual, expected, rule) > 0 ? null : StringFormatMessage(actual, rule);
+	private static bool StringMore(string actual, string expected, Rule rule) => StringCompare(actual, expected, rule) > 0;
 	
-	private static string? StringLessOrEqual(string actual, string expected, Rule rule)
-		=> StringCompare(actual, expected, rule) <= 0 ? null : StringFormatMessage(actual, rule);
+	private static bool StringLessOrEqual(string actual, string expected, Rule rule) => StringCompare(actual, expected, rule) <= 0;
 	
-	private static string? StringMoreOrEqual(string actual, string expected, Rule rule)
-		=> StringCompare(actual, expected, rule) >= 0 ? null : StringFormatMessage(actual, rule);
+	private static bool StringMoreOrEqual(string actual, string expected, Rule rule) => StringCompare(actual, expected, rule) >= 0;
 	
-	private static string? StringEqual(string actual, string expected, Rule rule)
-		=> StringIsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
+	private static bool StringEqual(string actual, string expected, Rule rule) => StringIsEqual(actual, expected, rule);
 	
-	private static string? StringNotEqual(string actual, string expected, Rule rule)
-		=> !StringIsEqual(actual, expected, rule) ? null : StringFormatMessage(actual, rule);
+	private static bool StringNotEqual(string actual, string expected, Rule rule) => !StringIsEqual(actual, expected, rule);
 	
-	private static string? StringBetween(string actual, string expected, Rule rule)
+	private static bool StringBetween(string actual, string expected, Rule rule)
 	{
 		string expected2 = rule.ExtraInfo!;
-		
-		return actual.Length >= int.Parse(expected) && actual.Length <= int.Parse(expected2)
-			? null
-			: StringFormatRangeMessage(actual, rule);
+		return actual.Length >= int.Parse(expected) && actual.Length <= int.Parse(expected2);
 	}
 	
-	private static string? StringOutside(string actual, string expected, Rule rule)
+	private static bool StringOutside(string actual, string expected, Rule rule)
 	{
 		string expected2 = rule.ExtraInfo!;
-		
-		return actual.Length < int.Parse(expected) || actual.Length > int.Parse(expected2)
-			? null
-			: StringFormatRangeMessage(actual, rule);
+		return actual.Length < int.Parse(expected) || actual.Length > int.Parse(expected2);
 	}
 	
-	private static string? StringRegex(string actual, string expected, Rule rule)
-		=> new Regex(expected).IsMatch(actual) ? null : StringFormatMessage(actual, rule);
+	private static bool StringRegex(string actual, string expected, Rule rule) => Regex.IsMatch(actual, expected);
 	
-	private static string? StringEmail(string actual, string expected, Rule rule) // TODO
-		=> actual.Contains('@') ? null : StringFormatMessage(actual, rule);
+	private static bool StringEmail(string actual, string expected, Rule rule) => actual.Contains('@'); // TODO
 	
 	
 	private static int StringCompare(string actual, string expected, Rule rule)
@@ -126,18 +111,22 @@ public static partial class PropertyValidator
 	}
 	
 	private static string StringFormatMessage(string actual, Rule rule)
-		=> rule.ErrorMessage?
-				.Replace(MessagePlaceholders.Value, rule.Value, StringComparison.OrdinalIgnoreCase)
-				.Replace(
-					MessagePlaceholders.ActualValue,
-					rule.ExtraInfo == RuleExtraInfo.ByLength ? actual.Length.ToString() : actual,
-					StringComparison.OrdinalIgnoreCase)
-				?? string.Empty;
-	
-	private static string StringFormatRangeMessage(string actual, Rule rule)
-		=> rule.ErrorMessage?
+	{
+		if (rule.Type is RuleType.Between or RuleType.Outside)
+		{
+			return rule.ErrorMessage?
 				.Replace(MessagePlaceholders.Value1, rule.Value, StringComparison.OrdinalIgnoreCase)
 				.Replace(MessagePlaceholders.Value2, rule.ExtraInfo, StringComparison.OrdinalIgnoreCase)
 				.Replace(MessagePlaceholders.ActualValue, actual.Length.ToString(), StringComparison.OrdinalIgnoreCase)
 				?? string.Empty;
+		}
+		
+		if (rule.ExtraInfo == RuleExtraInfo.ByLength)
+			actual = actual.Length.ToString();
+		
+		return rule.ErrorMessage?
+			.Replace(MessagePlaceholders.Value, rule.Value, StringComparison.OrdinalIgnoreCase)
+			.Replace(MessagePlaceholders.ActualValue, actual, StringComparison.OrdinalIgnoreCase)
+			?? string.Empty;
+	}
 }
