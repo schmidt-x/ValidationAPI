@@ -6,20 +6,20 @@ using ValidationAPI.Domain.Enums;
 
 namespace ValidationAPI.Common.Validators.RuleValidators;
 
-file delegate List<Rule>? RuleValidatorDelegate(
-	string failureKey,
-	string propertyName,
-	RuleRequest[] rules,
-	Dictionary<string, PropertyRequest> properties,
-	Dictionary<string, List<ErrorDetail>> failures);
+file delegate List<Rule>? RuleValidatorDelegate(string failureKey, string propertyName, RuleRequest[] rules);
 
 public partial class RuleValidator
 {
+	private record ValidatedRule(string Value, string? RawValue, RuleValueType ValueType, string? ExtraInfo, bool IsRelative);
+	
 	private readonly Dictionary<string, PropertyRequest> _properties;
-
+	
+	private readonly DateTimeOffset _now = DateTimeOffset.UtcNow;
+	
 	public Dictionary<string, List<ErrorDetail>> Failures { get; } = [];
 	
 	public bool IsValid => Failures.Count == 0;
+	
 
 	public RuleValidator(Dictionary<string, PropertyRequest> properties)
 	{
@@ -39,6 +39,6 @@ public partial class RuleValidator
 			_ => throw new ArgumentOutOfRangeException(nameof(property))
 		};
 		
-		return ruleValidator.Invoke(failureKey, propertyName, property.Rules, _properties, Failures);
+		return ruleValidator.Invoke(failureKey, propertyName, property.Rules);
 	}
 }

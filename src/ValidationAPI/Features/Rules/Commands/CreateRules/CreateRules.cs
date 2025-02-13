@@ -38,7 +38,6 @@ public class CreateRulesCommandHandler : RequestHandlerBase
 		var validationResult = _validator.Validate(command);
 		if (!validationResult.IsValid)
 		{
-			Console.WriteLine("from here");
 			return new ValidationException(validationResult.Errors);
 		}
 		

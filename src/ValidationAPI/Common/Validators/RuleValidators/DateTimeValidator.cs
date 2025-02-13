@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static ValidationAPI.Domain.Constants.ErrorCodes;
@@ -20,25 +21,14 @@ public partial class RuleValidator
 	[GeneratedRegex(@"^{(\w+)([+-][\d.:]+)?}$")]
 	private static partial Regex PropertyWithOffsetRegex();
 	
-	private static List<Rule>? ValidateDateTime( // TODO: refactor into a single, generic function along with DateTime and TimeOnly
-		string failureKey,
-		string propertyName,
-		RuleRequest[] rules,
-		Dictionary<string, PropertyRequest> properties,
-		Dictionary<string, List<ErrorDetail>> failures)
+	private List<Rule>? ValidateDateTime(string failureKey, string propertyName, RuleRequest[] rules)
 	{
-		var now = DateTimeOffset.UtcNow;
 		List<Rule> validatedRules = [];
 		
 		foreach (var rule in rules)
 		{
-			string ruleValue;
-			string? ruleRawValue = null;
-			string? ruleExtraInfo = null;
-			bool isRuleRelative = false;
-			var ruleValueType = RuleValueType.String;
+			ValidatedRule? validatedRule;
 			
-			var value = rule.Value;
 			switch (rule.Type)
 			{
 				case RuleType.Less:
@@ -47,258 +37,304 @@ public partial class RuleValidator
 				case RuleType.MoreOrEqual:
 				case RuleType.Equal:
 				case RuleType.NotEqual:
-					if (value.ValueKind != JsonValueKind.String)
-					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "String", value.ValueKind.ToString()));
-						continue;
-					}
-					
-					var rawDt = value.GetString();
-					if (string.IsNullOrWhiteSpace(rawDt))
-					{
-						failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Empty value.");
-						continue;
-					}
-					
-					if (rawDt.StartsWith('{'))
-					{
-						if (!rawDt.EndsWith('}'))
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime.");
-							continue;
-						}
-						if (rawDt.Length < 3)
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty property name.");
-							continue;
-						}
-						var relativeMatch = PropertyWithOffsetRegex().Match(rawDt);
-						if (!relativeMatch.Success)
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid property/offset.");
-							continue;
-						}
-						var offsetGroup = relativeMatch.Groups[2];
-						if (offsetGroup.Success)
-						{
-							if ((ruleExtraInfo = GetOffsetStringIfValid(offsetGroup)) is null)
-							{
-								failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset.");
-								continue;
-							}
-						}
-						var targetPropertyName = relativeMatch.Groups[1].Value;
-						var errorDetail = ValidateTargetProperty(propertyName, targetPropertyName, PropertyType.DateTime, rule.Name, properties);
-						if (errorDetail != null)
-						{
-							failures.AddErrorDetail(failureKey, errorDetail);
-							continue;
-						}
-						if (failures.Count != 0) continue;
-						ruleValue = targetPropertyName;
-						ruleRawValue = rawDt;
-						isRuleRelative = true;
-						break;
-					}
-					
-					if (rawDt.StartsWith("n", StringComparison.OrdinalIgnoreCase))
-					{
-						var nowMatch = NowWithOffsetRegex().Match(rawDt);
-						if (!nowMatch.Success)
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime.");
-							continue;
-						}
-						var offsetGroup = nowMatch.Groups[1];
-						if (offsetGroup.Success)
-						{
-							if ((ruleExtraInfo = GetOffsetStringIfValid(offsetGroup)) is null)
-							{
-								failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset.");
-								continue;
-							}
-							ruleRawValue = rawDt;
-						}
-						if (failures.Count != 0) continue;
-						ruleValue = RuleOption.Now;
-						break;
-					}
-					
-					// it's neither '{PropertyName[offset]}' nor 'now[offset]'
-					
-					if (!DateTimeOffset.TryParse(rawDt, out _))
-					{
-						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime.");
-						continue;
-					}
-					if (failures.Count != 0) continue;
-					ruleValue = rawDt;
+					validatedRule = DateTimeValidateComparison<DateTime>(failureKey, propertyName, rule, PropertyType.DateTime);
 					break;
 				
 				case RuleType.Between:
 				case RuleType.Outside:
-					if (value.ValueKind != JsonValueKind.Array)
-					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "Array", value.ValueKind.ToString()));
-						continue;
-					}
-					
-					var arrayLength = value.GetArrayLength();
-					if (arrayLength != 2)
-					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Array must contain 2 elements; got: {arrayLength}.");
-						continue;
-					}
-					
-					JsonElement lower; 
-					JsonElement upper;
-					
-					using (var enumerator = rule.Value.EnumerateArray())
-					{
-						enumerator.MoveNext();
-						lower = enumerator.Current;
-						enumerator.MoveNext();
-						upper = enumerator.Current;
-					}
-					
-					if (lower.ValueKind != JsonValueKind.String || lower.ValueKind != upper.ValueKind)
-					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, 
-							$"[{rule.Name}] Both values must be of the same type 'Json.String' representing valid DateTime values.");
-						continue;
-					}
-					
-					var lBoundRaw = lower.GetString();
-					if (string.IsNullOrWhiteSpace(lBoundRaw))
-					{
-						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty value (lower bound).");
-						continue;
-					}
-					
-					var uBoundRaw = upper.GetString();
-					if (string.IsNullOrWhiteSpace(uBoundRaw))
-					{
-						failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty value (upper bound).");
-						continue;
-					}
-					
-					bool isLowerBoundDynamic = false;
-					bool isUpperBoundDynamic = false;
-					
-					DateTimeOffset lBound;
-					DateTimeOffset uBound;
-					
-					if (!lBoundRaw.StartsWith("n", StringComparison.OrdinalIgnoreCase))
-					{
-						if (!DateTimeOffset.TryParse(lBoundRaw, out lBound))
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime (lower bound).");
-							continue;
-						}
-					}
-					else
-					{
-						var nowMatch = NowWithOffsetRegex().Match(lBoundRaw);
-						if (!nowMatch.Success)
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime (lower bound).");
-							continue;
-						}
-						lBound = now;
-						isLowerBoundDynamic = true;
-						var offsetGroup = nowMatch.Groups[1];
-						if (offsetGroup.Success)
-						{
-							if (!TryGetOffset(offsetGroup, out var offset))
-							{
-								failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset (lower bound).");
-								continue;
-							}
-							lBound = lBound.Add(offset);
-						}
-					}
-					
-					if (!uBoundRaw.StartsWith("n", StringComparison.OrdinalIgnoreCase))
-					{
-						if (!DateTimeOffset.TryParse(uBoundRaw, out uBound))
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime (upper bound).");
-							continue;
-						}
-						if (isLowerBoundDynamic)
-						{
-							failures.AddErrorDetail(
-								failureKey, INVALID_RULE_VALUE,
-								$"[{rule.Name}] Upper bound cannot be fixed date while lower bound is 'now'.");
-							continue;
-						}
-					}
-					else
-					{
-						var nowMatch = NowWithOffsetRegex().Match(uBoundRaw);
-						if (!nowMatch.Success)
-						{
-							failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid DateTime (upper bound).");
-							continue;
-						}
-						uBound = now;
-						isUpperBoundDynamic = true;
-						var offsetGroup = nowMatch.Groups[1];
-						if (offsetGroup.Success)
-						{
-							if (!TryGetOffset(offsetGroup, out var offset))
-							{
-								failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset (upper bound).");
-								continue;
-							}
-							uBound = uBound.Add(offset);
-						}
-					}
-					
-					if (lBound >= uBound)
-					{
-						failures.AddErrorDetail(
-							failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Lower bound cannot be equal to or greater than upper bound.");
-						continue;
-					}
-					if (failures.Count != 0) continue;
-					
-					ruleValue = isLowerBoundDynamic ? RuleOption.Now + lBoundRaw[RuleOption.Now.Length..] : lBoundRaw;
-					ruleRawValue = value.GetRawText();
-					ruleExtraInfo = isUpperBoundDynamic ? RuleOption.Now + uBoundRaw[RuleOption.Now.Length..] : uBoundRaw;
-					ruleValueType = RuleValueType.Range;
+					validatedRule = DateTimeValidateRange(failureKey, rule, n => n);
 					break;
 				
 				case RuleType.Regex:
 				case RuleType.Email:
-					failures.AddErrorDetail(failureKey, INVALID_RULE_TYPE, $"[{rule.Name}] Rule is not supported.");
+					Failures.AddErrorDetail(failureKey, INVALID_RULE_TYPE, $"[{rule.Name}] Rule is not supported.");
 					continue;
 				
-				default:
-					throw new ArgumentOutOfRangeException(nameof(rules));
+				default: throw new ArgumentOutOfRangeException(nameof(rules));
 			}
 			
-			Debug.Assert(failures.Count == 0, "Call 'continue' if the rule has failed or 'failures.Count' != 0.");
+			if (validatedRule is null) continue;
+			
+			Debug.Assert(IsValid);
 			
 			validatedRules.Add(new Rule
 			{
 				Name = rule.Name,
 				NormalizedName = rule.Name.ToUpperInvariant(),
 				Type = rule.Type,
-				Value = ruleValue,
-				RawValue = ruleRawValue,
-				ValueType = ruleValueType,
-				ExtraInfo = ruleExtraInfo,
-				IsRelative = isRuleRelative,
+				Value = validatedRule.Value,
+				RawValue = validatedRule.RawValue,
+				ValueType = validatedRule.ValueType,
+				ExtraInfo = validatedRule.ExtraInfo,
+				IsRelative = validatedRule.IsRelative,
 				ErrorMessage = rule.ErrorMessage
 			}); 
 		}
 		
-		return failures.Count == 0 ? validatedRules : null;
+		return IsValid ? validatedRules : null;
+	}
+	
+	
+	private ValidatedRule? DateTimeValidateComparison<T>(
+		string failureKey, string propertyName, RuleRequest rule, PropertyType propertyType) where T : struct, IParsable<T>
+	{
+		string ruleValue;
+		string? ruleRawValue = null;
+		string? ruleExtraInfo = null;
+		bool isRuleRelative = false;
+		
+		var typeName = propertyType.ToString();
+		var value = rule.Value;
+		
+		if (value.ValueKind != JsonValueKind.String)
+		{
+			Failures.AddErrorDetail(
+				failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "String", value.ValueKind.ToString()));
+			return null;
+		}
+		
+		var rawValue = value.GetString();
+		if (string.IsNullOrWhiteSpace(rawValue))
+		{
+			Failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Empty value.");
+			return null;
+		}
+		
+		if (rawValue.StartsWith('{'))
+		{
+			if (!rawValue.EndsWith('}'))
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid ${typeName}.");
+				return null;
+			}
+			if (rawValue.Length < 3)
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty property name.");
+				return null;
+			}
+			
+			var propertyMatch = PropertyWithOffsetRegex().Match(rawValue);
+			if (!propertyMatch.Success)
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid property/offset.");
+				return null;
+			}
+			
+			var offsetGroup = propertyMatch.Groups[2];
+			if (offsetGroup.Success)
+			{
+				if ((ruleExtraInfo = GetOffsetStringIfValid(offsetGroup)) is null)
+				{
+					Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset.");
+					return null;
+				}
+			}
+			
+			var targetPropertyName = propertyMatch.Groups[1].Value;
+			
+			var errorDetail = ValidateTargetProperty(propertyName, targetPropertyName, propertyType, rule.Name);
+			if (errorDetail != null)
+			{
+				Failures.AddErrorDetail(failureKey, errorDetail);
+				return null;
+			}
+			
+			if (!IsValid) return null;
+			
+			ruleValue = targetPropertyName;
+			ruleRawValue = rawValue;
+			isRuleRelative = true;
+		}
+		else if (rawValue.StartsWith("n", StringComparison.OrdinalIgnoreCase))
+		{
+			var nowMatch = NowWithOffsetRegex().Match(rawValue);
+			if (!nowMatch.Success)
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName}.");
+				return null;
+			}
+			
+			var offsetGroup = nowMatch.Groups[1];
+			if (offsetGroup.Success)
+			{
+				if ((ruleExtraInfo = GetOffsetStringIfValid(offsetGroup)) is null)
+				{
+					Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset.");
+					return null;
+				}
+				ruleRawValue = rawValue;
+			}
+			
+			if (!IsValid) return null;
+			ruleValue = RuleOption.Now;
+		}
+		else
+		{
+			if (!T.TryParse(rawValue, CultureInfo.InvariantCulture, out _))
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName}.");
+				return null;
+			}
+			
+			if (!IsValid) return null;
+			ruleValue = rawValue;
+		}
+		
+		return new ValidatedRule(ruleValue, ruleRawValue, RuleValueType.String, ruleExtraInfo, isRuleRelative);
+	}
+	
+	private ValidatedRule? DateTimeValidateRange<T>(string failureKey, RuleRequest rule, Func<DateTimeOffset, T> converter)
+		where T : struct, IComparable<T>, IParsable<T>
+	{
+		var type = typeof(T);
+		var typeName = type.Name;
+		
+		var value = rule.Value;
+		if (value.ValueKind != JsonValueKind.Array)
+		{
+			Failures.AddErrorDetail(
+				failureKey, INVALID_RULE_VALUE, InvalidValueTypeMessage(rule.Name, "Array", value.ValueKind.ToString()));
+			return null;
+		}
+		
+		var arrayLength = value.GetArrayLength();
+		if (arrayLength != 2)
+		{
+			Failures.AddErrorDetail(
+				failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Array must contain 2 elements; got: {arrayLength}.");
+			return null;
+		}
+		
+		JsonElement lower, upper; 
+		
+		using (var enumerator = rule.Value.EnumerateArray())
+		{
+			enumerator.MoveNext(); lower = enumerator.Current;
+			enumerator.MoveNext(); upper = enumerator.Current;
+		}
+		
+		if (lower.ValueKind != JsonValueKind.String || lower.ValueKind != upper.ValueKind)
+		{
+			Failures.AddErrorDetail(
+				failureKey, INVALID_RULE_VALUE,
+				$"[{rule.Name}] Both values must be of the same type 'Json.String' representing valid {typeName} values.");
+			return null;
+		}
+		
+		var lBoundRaw = lower.GetString();
+		if (string.IsNullOrWhiteSpace(lBoundRaw))
+		{
+			Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty value (lower bound).");
+			return null;
+		}
+		
+		var uBoundRaw = upper.GetString();
+		if (string.IsNullOrWhiteSpace(uBoundRaw))
+		{
+			Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Empty value (upper bound).");
+			return null;
+		}
+		
+		bool isLowerBoundDynamic = false, isUpperBoundDynamic = false;
+		T lBound, uBound;
+		
+		// I, most likely, should extract the following 2 'almost-identical' branches into a function...
+		
+		if (!lBoundRaw.StartsWith("n", StringComparison.OrdinalIgnoreCase))
+		{
+			if (!T.TryParse(lBoundRaw, CultureInfo.InvariantCulture, out lBound))
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName} (lower bound).");
+				return null;
+			}
+		}
+		else
+		{
+			var nowMatch = NowWithOffsetRegex().Match(lBoundRaw);
+			if (!nowMatch.Success)
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName} (lower bound).");
+				return null;
+			}
+			
+			var lBoundDt = _now;
+			isLowerBoundDynamic = true;
+			
+			var offsetGroup = nowMatch.Groups[1];
+			if (offsetGroup.Success)
+			{
+				if (!TryGetOffset(offsetGroup, out var offset))
+				{
+					Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset (lower bound).");
+					return null;
+				}
+				
+				lBoundDt = type == typeof(DateOnly)
+					? lBoundDt.AddDays(offset.Days) // ignore 'time' components
+					: lBoundDt.Add(offset);
+			}
+			
+			lBound = converter.Invoke(lBoundDt);
+		}
+		
+		if (!uBoundRaw.StartsWith("n", StringComparison.OrdinalIgnoreCase))
+		{
+			if (!T.TryParse(uBoundRaw, CultureInfo.InvariantCulture, out uBound))
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName} (upper bound)."); 
+				return null;
+			}
+			
+			if (isLowerBoundDynamic)
+			{
+				Failures.AddErrorDetail(
+					failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Upper bound cannot be fixed value while lower bound is 'now'.");
+				return null;
+			}
+		}
+		else
+		{
+			var nowMatch = NowWithOffsetRegex().Match(uBoundRaw);
+			if (!nowMatch.Success)
+			{
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid {typeName} (upper bound).");
+				return null;
+			}
+			
+			var uBoundDt = _now;
+			isUpperBoundDynamic = true;
+			
+			var offsetGroup = nowMatch.Groups[1];
+			if (offsetGroup.Success)
+			{
+				if (!TryGetOffset(offsetGroup, out var offset))
+				{
+					Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid offset (upper bound).");
+					return null;
+				}
+			
+				uBoundDt = type == typeof(DateOnly)
+					? uBoundDt.AddDays(offset.Days) // ignore 'time' components
+					: uBoundDt.Add(offset);
+			}
+			
+			uBound = converter.Invoke(uBoundDt);
+		}
+		
+		if (lBound.CompareTo(uBound) >= 0)
+		{
+			Failures.AddErrorDetail(
+				failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Lower bound cannot be equal to or greater than Upper bound.");
+			return null;
+		}
+		
+		if (!IsValid) return null;
+		
+		string ruleValue = isLowerBoundDynamic ? RuleOption.Now + lBoundRaw[RuleOption.Now.Length..] : lBoundRaw;
+		string ruleRawValue = value.GetRawText();
+		string ruleExtraInfo = isUpperBoundDynamic ? RuleOption.Now + uBoundRaw[RuleOption.Now.Length..] : uBoundRaw;
+
+		return new ValidatedRule(ruleValue, ruleRawValue, RuleValueType.Range, ruleExtraInfo, false);
 	}
 	
 	private static string? GetOffsetStringIfValid(Group offsetGroup)
