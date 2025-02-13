@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,12 +54,15 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 		
 		if (await _db.Properties.ExistsAsync(propertyReqEx.Name, endpointId.Value, ct))
 		{
-			return new OperationInvalidException(
-				$"Property with the name '{propertyReqEx.Name}' already exists (case-sensitive).");
+			return new OperationInvalidException($"Property with the name '{propertyReqEx.Name}' already exists (case-sensitive).");
 		}
 		
-		var dbRuleNames =
-			(await _db.Rules.GetAllNamesAsync(endpointId.Value, ct)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+		if (propertyReqEx.Rules.Length == 0)
+		{
+			return await SaveProperty(propertyReqEx, [], endpointId.Value, userId, ct);
+		}
+		
+		var dbRuleNames = (await _db.Rules.GetAllNamesAsync(endpointId.Value, ct)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 		
 		var duplicateRule = propertyReqEx.Rules.FirstOrDefault(r => dbRuleNames.Contains(r.Name));
 		if (duplicateRule != null)
@@ -77,6 +81,12 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			return new ValidationException(ruleValidator.Failures);
 		}
 		
+		return await SaveProperty(propertyReqEx, validatedRules, endpointId.Value, userId, ct);
+	}
+	
+	private async Task<Exception?> SaveProperty(
+		PropertyRequestExpanded propertyReqEx, List<Rule> rules, int endpointId, Guid userId, CancellationToken ct)
+	{
 		var timeNow = DateTimeOffset.UtcNow;
 		
 		var property = new Property
@@ -86,8 +96,8 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			IsOptional = propertyReqEx.IsOptional,
 			CreatedAt = timeNow,
 			ModifiedAt = timeNow,
-			EndpointId = endpointId.Value,
-			Rules = validatedRules
+			EndpointId = endpointId,
+			Rules = rules
 		};
 		
 		int propertyId;
@@ -98,9 +108,9 @@ public class CreatePropertyCommandHandler : RequestHandlerBase
 			propertyId = await _db.Properties.CreateAsync(property, ct);
 			if (property.Rules.Count != 0)
 			{
-				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId.Value, ct);
+				await _db.Rules.CreateAsync(property.Rules, propertyId, endpointId, ct);
 			}
-			await _db.Endpoints.SetModificationDateAsync(timeNow, endpointId.Value, ct);
+			await _db.Endpoints.SetModificationDateAsync(timeNow, endpointId, ct);
 		}
 		catch (Exception ex)
 		{

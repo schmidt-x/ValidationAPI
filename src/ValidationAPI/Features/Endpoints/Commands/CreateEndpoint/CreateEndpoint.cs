@@ -72,8 +72,7 @@ public class CreateEndpointCommandHandler : RequestHandlerBase
 		var userId = _user.Id();
 		if (await _db.Endpoints.ExistsAsync(command.Endpoint, userId, ct))
 		{
-			return new OperationInvalidException(
-				$"Endpoint with the name '{command.Endpoint}' already exists (case-insensitive).");
+			return new OperationInvalidException($"Endpoint with the name '{command.Endpoint}' already exists (case-insensitive).");
 		}
 		
 		var endpoint = new Endpoint
