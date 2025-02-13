@@ -7,16 +7,16 @@ namespace ValidationAPI.UnitTests.Common.Validators.RuleValidators;
 
 public class DateTimeRuleTests
 {
-	private const PropertyType DateTimeType = PropertyType.DateTime;
-	
-	[Fact]
-	public void ShouldSucceed_DateTime()
+	[Theory]
+	[InlineData("2025-01-01T12:00:00Z", PropertyType.DateTime)]
+	[InlineData("2025-01-01", PropertyType.DateOnly)]
+	public void ShouldSucceed_DateTime(string date, PropertyType type)
 	{
 		// Arrange
-		var value = TestHelpers.GetJsonProperty("\"2025-01-01T12:00:00Z\"");
+		var value = TestHelpers.GetJsonProperty($"\"{date}\"");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Equal, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
@@ -45,17 +45,20 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("noW", "+00:05")]
-	[InlineData("nOw", "-00:05")]
-	[InlineData("NoW", null)] // 'now' with no offset
-	public void ShouldSucceed_NowWithOffset(string now, string? offset)
+	[InlineData("noW", "+00:05", PropertyType.DateTime)]
+	[InlineData("nOw", "-00:05", PropertyType.DateTime)]
+	[InlineData("NoW", null, PropertyType.DateTime)]
+	[InlineData("NOW", "+1", PropertyType.DateOnly)]
+	[InlineData("now", "-1", PropertyType.DateOnly)]
+	[InlineData("NOw", null, PropertyType.DateOnly)]
+	public void ShouldSucceed_NowWithOffset(string now, string? offset, PropertyType type)
 	{
 		// Arrange
 		
 		var value = TestHelpers.GetJsonProperty($"\"{now}{offset}\"");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Equal, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
@@ -84,21 +87,24 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("+00:05")]
-	[InlineData("-00:05")]
-	[InlineData(null)]  // no offset
-	public void ShouldSucceed_RelativeWithOffset(string? offset)
+	[InlineData("+00:05", PropertyType.DateTime)]
+	[InlineData("-00:05", PropertyType.DateTime)]
+	[InlineData(null, PropertyType.DateTime)]  // no offset
+	[InlineData("+1", PropertyType.DateOnly)]
+	[InlineData("-1", PropertyType.DateOnly)]
+	[InlineData(null, PropertyType.DateOnly)]  // no offset
+	public void ShouldSucceed_RelativeWithOffset(string? offset, PropertyType type)
 	{
 		// Arrange
-		const string targetPropertyName = "Username";
+		const string targetPropertyName = "Hello_There";
 		var value = TestHelpers.GetJsonProperty($"\"{{{targetPropertyName}{offset}}}\"");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Equal, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		Dictionary<string, PropertyRequest> properties = new()
 		{
-			{ targetPropertyName, new PropertyRequest(DateTimeType, false) }
+			{ targetPropertyName, new PropertyRequest(type, false) }
 		};
 		
 		var sut = new RuleValidator(properties);
@@ -128,20 +134,26 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("now-00:05", "now+00:05")]
-	[InlineData("now", "now+00:05")]
-	[InlineData("now-00:05", "now")]
-	[InlineData("2025-01-01T12:00:00Z", "now")]
-	[InlineData("2025-01-01T12:00:00Z", "now+00:05")]
-	[InlineData("2025-01-01T12:00:00Z", "2025-01-01T12:00:01Z")]
-	public void ShouldSucceed_Range(string lower, string upper)
+	[InlineData("now-00:05", "now+00:05", PropertyType.DateTime)]
+	[InlineData("now", "now+00:05", PropertyType.DateTime)]
+	[InlineData("now-00:05", "now", PropertyType.DateTime)]
+	[InlineData("2025-01-01T12:00:00Z", "now", PropertyType.DateTime)]
+	[InlineData("2025-01-01T12:00:00Z", "now+00:05", PropertyType.DateTime)]
+	[InlineData("2025-01-01T12:00:00Z", "2025-01-01T12:00:01Z", PropertyType.DateTime)]
+	[InlineData("now-1", "now+1", PropertyType.DateOnly)]
+	[InlineData("now", "now+1", PropertyType.DateOnly)]
+	[InlineData("now-1", "now", PropertyType.DateOnly)]
+	[InlineData("2025-01-01", "now", PropertyType.DateOnly)]
+	[InlineData("2025-01-01", "now+1", PropertyType.DateOnly)]
+	[InlineData("2025-01-01", "2025-01-02", PropertyType.DateOnly)]
+	public void ShouldSucceed_Range(string lower, string upper, PropertyType type)
 	{
 		// Arrange
 		
 		var value = TestHelpers.GetJsonProperty($"[\"{lower}\", \"{upper}\"]");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Between, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
@@ -170,16 +182,18 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("now00:05")]
-	[InlineData("{Username00:05}")]
-	public void ShouldFailIfSignIsNotPresent(string input)
+	[InlineData("now00:05", PropertyType.DateTime)]
+	[InlineData("{Username00:05}", PropertyType.DateTime)]
+	[InlineData("now1", PropertyType.DateOnly)]
+	[InlineData("{Username1.00:00}", PropertyType.DateOnly)]
+	public void ShouldFailIfSignIsNotPresent(string input, PropertyType type)
 	{
 		// Arrange
 		
 		var value = TestHelpers.GetJsonProperty($"\"{input}\"");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Equal, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
@@ -194,18 +208,21 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("now+00:05", "now")]
-	[InlineData("2025-01-01T12:00:01Z", "2025-01-01T12:00:00Z")]
-	[InlineData("now+00:05", "2026-01-01T12:00:00Z")] // «now» will exceed sooner or later
-	[InlineData("now", "2026-01-01T12:00:00Z")]
-	public void ShouldFailIfLowerBoundExceedsUpperBound(string lower, string upper)
+	[InlineData("now+00:05", "now", PropertyType.DateTime)]
+	[InlineData("2025-01-01T12:00:01Z", "2025-01-01T12:00:00Z", PropertyType.DateTime)]
+	[InlineData("now", "2026-01-01T12:00:00Z", PropertyType.DateTime)] // «now» will exceed sooner or later
+	// time component should be ignored for DateOnly, e.g., now[+-anyTimeOffset] should still be 'now'
+	[InlineData("now-23:59", "now", PropertyType.DateOnly)]
+	[InlineData("2025-01-01", "2025-01-01", PropertyType.DateOnly)]
+	[InlineData("now", "2026-01-01", PropertyType.DateOnly)]
+	public void ShouldFailIfLowerBoundExceedsUpperBound(string lower, string upper, PropertyType type)
 	{
 		// Arrange
 		
 		var value = TestHelpers.GetJsonProperty($"[\"{lower}\", \"{upper}\"]");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Between, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
@@ -220,17 +237,16 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("NOw-00:05", "nOW+00:05")]
-	[InlineData("NoW", "NOW+00:05")]
-	[InlineData("nOw-00:05", "NoW")]
-	public void ShouldLowerNowOptionForRange(string lower, string upper)
+	[InlineData("NOw-00:05", "nOW+00:05", PropertyType.DateTime)]
+	[InlineData("nOw-1", "NoW", PropertyType.DateOnly)]
+	public void ShouldLowerNowOptionForRange(string lower, string upper, PropertyType type)
 	{
 		// Arrange
 		
 		var value = TestHelpers.GetJsonProperty($"[\"{lower}\", \"{upper}\"]");
 		
 		RuleRequest[] rules = [ new("_", RuleType.Between, value, "") ];
-		var property = new PropertyRequest(DateTimeType, false) { Rules = rules };
+		var property = new PropertyRequest(type, false) { Rules = rules };
 		
 		var sut = new RuleValidator([]);
 		
