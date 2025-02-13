@@ -36,7 +36,7 @@ public static partial class PropertyValidator
 				PropertyType.Float    => throw new NotImplementedException(),
 				PropertyType.String   => ValidateString,
 				PropertyType.DateTime => ValidateDateTime,
-				PropertyType.DateOnly => throw new NotImplementedException(),
+				PropertyType.DateOnly => ValidateDateOnly,
 				PropertyType.TimeOnly => throw new NotImplementedException(),
 				_ => throw new ArgumentOutOfRangeException(nameof(rules))
 			};
@@ -121,11 +121,24 @@ public static partial class PropertyValidator
 					break;
 				
 				case PropertyType.DateOnly:
+					if (!DateOnly.TryParse(requestValue.GetString()!, out var dateOnly))
+					{
+						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE, "Value is not valid DateOnly.");
+						continue;
+					}
+					value = dateOnly;
+					break;
+					
 				case PropertyType.TimeOnly:
-					throw new NotImplementedException();
+					if (!TimeOnly.TryParse(requestValue.GetString()!, out var timeOnly))
+					{
+						failures.AddErrorDetail(dbProperty.Name, INVALID_PROPERTY_TYPE, "Value is not valid TimeOnly.");
+						continue;
+					}
+					value = timeOnly;
+					break;
 				
-				default:
-					throw new ArgumentOutOfRangeException(nameof(dbProperties));
+				default: throw new ArgumentOutOfRangeException(nameof(dbProperties));
 			}
 			
 			if (failures.Count != 0) continue;

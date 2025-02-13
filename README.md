@@ -21,6 +21,7 @@ This API provides a flexible and dynamic approach to user-input validation by al
     - [Int and Float](#int-and-float)
     - [String](#string)
     - [DateTime / DateOnly / TimeOnly](#datetime--dateonly--timeonly)
+      - [Now](#now)
       - [Offset](#offset)
   - [IsOptional](#isoptional)
 
@@ -38,7 +39,7 @@ The following request defines an endpoint `/my-endpoint` with the following prop
 - DateOfBirth (DateOnly)
   - User must be at least 18 years old (6,574 days approximately)
 - Password (String)
-  - Length must be at least 8 characters
+  - *(rules omitted for brevity)*
 - ConfirmPassword (String)
   - Must be exactly equal to **Password** (case-sensitive)
 - OldPassword (String)
@@ -102,14 +103,7 @@ POST /api/endpoints
     "Password": {
       "Type": "String",
       "IsOptional": false,
-      "Rules": [
-        {
-          "Name": "PASSWORD_MIN_LENGTH",
-          "Type": ">=",
-          "Value": 8,
-          "ErrorMessage": "Password must be at least {value} characters long; got: {actualValue}."
-        }
-      ]
+      "Rules": []
     },
     "ConfirmPassword": {
       "Type": "String",
@@ -148,7 +142,7 @@ POST /api/endpoints
           "Name": "START_TIME_RANGE",
           "Type": "Between",
           "Value": [ "2025-01-01T00:00:00Z", "now-00:01" ],
-          "ErrorMessage": "Start time must be at least 1 minute in the past and no earlier than January 1, 2025."
+          "ErrorMessage": "Start time must be at least 1 minute in the past and no earlier than January 1, 2025 (UTC)."
         }
       ]
     },
@@ -157,7 +151,7 @@ POST /api/endpoints
       "IsOptional": false,
       "Rules": [
         {
-          "Name": "END_TIME_OFFSET",
+          "Name": "END_TIME_START_TIME_OFFSET",
           "Type": ">=",
           "Value": "{StartTime+00:05}",
           "ErrorMessage": "End time must be at least 5 minutes after Start time."
@@ -198,12 +192,12 @@ HTTP/1.1 200 OK
 {
   "Status": "FAILURE",
   "ProcessedProperties": 9,
-  "AppliedRules": 10,
+  "AppliedRules": 9,
   "Failures": {
     "EmailAddress": [
       {
         "Code": "INVALID_EMAIL_ADDRESS",
-        "Message": "Value 'invalid_email' is not a valid email address."
+        "Message": "Value 'invalid-value' is not a valid email address."
       }
     ],
     "Username": [
@@ -222,12 +216,6 @@ HTTP/1.1 200 OK
         "Message": "You must be an adult."
       }
     ],
-    "Password": [
-      {
-        "Code": "PASSWORD_MIN_LENGTH",
-        "Message": "Password must be at least 8 characters long; got: 3."
-      }
-    ],
     "ConfirmPassword": [
       {
         "Code": "PASSWORDS_EQUALITY",
@@ -243,7 +231,7 @@ HTTP/1.1 200 OK
     "StartTime": [
       {
         "Code": "START_TIME_RANGE",
-        "Message": "Start time must be at least 1 minute in the past and no earlier than January 1, 2025."
+        "Message": "Start time must be at least 1 minute in the past and no earlier than January 1, 2025 (UTC)."
       }
     ],
     "EndTime": [
@@ -359,7 +347,7 @@ Example:
   "ErrorMessage": "Username must be at least {value} characters long; got {actualValue}."
 }
 ```
-If a request fails this rule (e.g., the username provided is only 2 characters long), the error response would contain the following error object:
+If a request fails this rule (e.g., the username provided is only 2 characters long), the response would contain the following error object:
 
 ```json
 {
@@ -466,7 +454,9 @@ TimeOnly | Represents a time of day, as would be read from a clock, within the r
 
 All support [Comparison](#comparison-rules-single-value-comparisons) (including [Relative rules](#relative-rules)) and [Range-Based Comparison](#range-based-comparison-rules-multi-value-comparisons) rules.
 
-For **Date**/**Time** properties, you can define fixed rule values or dynamically reference the current UTC time (at the moment of validation) using the keyword `now`.
+##### Now
+
+For **Date**/**Time** properties, besides defining fixed rule-values, you can dynamically reference the current UTC time (at the moment of validation) using the keyword `now`.
 
 For example, to ensure that the **DateTime** property (named `StartTime`) is in the past, you would define the following rule:
 
@@ -503,16 +493,16 @@ Elements in square brackets (`[` and `]`) are optional. One selection from the l
 Example:
 ```json
 {
-  "Name": "RULE_1",
+  "Name": "START_TIME_DATE_ONLY",
   "Type": "Between",
-  "Value": [ "2025-01-01", "now-01:00" ],
-  "ErrorMessage": "Value must be at least an hour in the past and no earlier than January 1, 2025."
+  "Value": [ "now-1", "now+1" ],
+  "ErrorMessage": "Start time must fall within the range of yesterday to tomorrow."
 },
 {
-  "Name": "RULE_2",
+  "Name": "END_TIME_DATE_ONLY",
   "Type": ">=",
-  "Value": "{StartTime+00:01}",
-  "ErrorMessage": "End time must be at least one minute after the Start time."
+  "Value": "{StartTime+1}",
+  "ErrorMessage": "End time must be at least one day after the Start time."
 }
 ```
 
