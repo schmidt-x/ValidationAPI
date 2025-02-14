@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
 using ValidationAPI.Domain.Constants;
@@ -68,18 +69,20 @@ public static partial class PropertyValidator
 	
 	private static bool DateTimeBetween(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
 	{
-		var lower = DateTimeExtractRange(rule.Value, now);
-		var upper = DateTimeExtractRange(rule.ExtraInfo!, now);
+		var lower = DateTimeExtractRange(rule.Value, now, DateTimeConverter);
+		var upper = DateTimeExtractRange(rule.ExtraInfo!, now, DateTimeConverter);
 		return actual >= lower && actual <= upper;
 	}
 	
 	private static bool DateTimeOutside(DateTimeOffset actual, DateTimeOffset? _, DateTimeOffset now, Rule rule)
 	{
-		var lower = DateTimeExtractRange(rule.Value, now);
-		var upper = DateTimeExtractRange(rule.ExtraInfo!, now);
+		var lower = DateTimeExtractRange(rule.Value, now, DateTimeConverter);
+		var upper = DateTimeExtractRange(rule.ExtraInfo!, now, DateTimeConverter);
 		return actual < lower || actual > upper;
 	}
 	
+	
+	private static DateTimeOffset DateTimeConverter(DateTimeOffset dt) => dt;
 	
 	private static int DateTimeCompare(DateTimeOffset actual, DateTimeOffset? expected, DateTimeOffset now, Rule rule)
 	{
@@ -91,13 +94,22 @@ public static partial class PropertyValidator
 		return actual.CompareTo(expected.Value);
 	}
 	
-	private static DateTimeOffset DateTimeExtractRange(string value, DateTimeOffset now)
+	private static T DateTimeExtractRange<T>(string value, DateTimeOffset now, Func<DateTimeOffset, T> converter)
+		where T : struct, IParsable<T>
 	{
-		if (!value.StartsWith('n')) return DateTimeOffset.Parse(value);
+		if (!value.StartsWith('n'))
+		{
+			return T.Parse(value, CultureInfo.InvariantCulture);
+		}
 		var startIndex = RuleOption.Now.Length;
-		if (startIndex == value.Length) return now;
+		if (startIndex == value.Length)
+		{
+			return converter.Invoke(now);
+		}
 		if (value[startIndex] == '+') startIndex++;
-		return now.Add(TimeSpan.Parse(value.AsSpan(startIndex)));
+		
+		var offset = TimeSpan.Parse(value.AsSpan(startIndex));
+		return converter.Invoke(now.Add(offset));
 	}
 	
 	private static string DateTimeFormatMessage<T>(T actual, Rule rule) where T : struct

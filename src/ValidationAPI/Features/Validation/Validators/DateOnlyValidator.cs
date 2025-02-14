@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using ValidationAPI.Common.Extensions;
 using ValidationAPI.Common.Models;
-using ValidationAPI.Domain.Constants;
 using ValidationAPI.Domain.Entities;
 using ValidationAPI.Domain.Enums;
 using ValidationAPI.Features.Validation.Models;
@@ -68,18 +67,20 @@ public partial class PropertyValidator
 	
 	private static bool DateOnlyBetween(DateOnly actual, DateOnly? _, DateTimeOffset now, Rule rule)
 	{
-		var lower = DateOnlyExtractRange(rule.Value, now);
-		var upper = DateOnlyExtractRange(rule.ExtraInfo!, now);
+		var lower = DateTimeExtractRange(rule.Value, now, DateOnlyConverter);
+		var upper = DateTimeExtractRange(rule.ExtraInfo!, now, DateOnlyConverter);
 		return actual >= lower && actual <= upper;
 	}
 	
 	private static bool DateOnlyOutside(DateOnly actual, DateOnly? _, DateTimeOffset now, Rule rule)
 	{
-		var lower = DateOnlyExtractRange(rule.Value, now);
-		var upper = DateOnlyExtractRange(rule.ExtraInfo!, now);
+		var lower = DateTimeExtractRange(rule.Value, now, DateOnlyConverter);
+		var upper = DateTimeExtractRange(rule.ExtraInfo!, now, DateOnlyConverter);
 		return actual < lower || actual > upper;
 	}
 	
+	
+	private static DateOnly DateOnlyConverter(DateTimeOffset dt) => DateOnly.FromDateTime(dt.DateTime);
 	
 	private static int DateOnlyCompare(DateOnly actual, DateOnly? expected, DateTimeOffset now, Rule rule)
 	{
@@ -100,22 +101,5 @@ public partial class PropertyValidator
 			expected = DateOnly.Parse(rule.Value);
 		
 		return actual.CompareTo(expected.Value);
-	}
-	
-	private static DateOnly DateOnlyExtractRange(string value, DateTimeOffset now)
-	{
-		if (!value.StartsWith('n'))
-		{
-			return DateOnly.Parse(value);
-		}
-		var startIndex = RuleOption.Now.Length;
-		if (startIndex == value.Length)
-		{
-			return DateOnly.FromDateTime(now.DateTime);
-		}
-		if (value[startIndex] == '+') startIndex++;
-		
-		var offset = TimeSpan.Parse(value.AsSpan(startIndex));
-		return DateOnly.FromDateTime(now.Add(offset).DateTime);
 	}
 }
