@@ -112,21 +112,21 @@ public static partial class PropertyValidator
 		return converter.Invoke(now.Add(offset));
 	}
 	
-	private static string DateTimeFormatMessage<T>(T actual, Rule rule) where T : struct
+	private static string DateTimeFormatMessage<T>(T actual, Rule rule, string? format = null) where T : struct, IFormattable
 	{
 		if (rule.Type is RuleType.Between or RuleType.Outside)
 		{
 			return rule.ErrorMessage?
 				.Replace(MessagePlaceholders.Value1, rule.Value, StringComparison.OrdinalIgnoreCase)
 				.Replace(MessagePlaceholders.Value2, rule.ExtraInfo!, StringComparison.OrdinalIgnoreCase)
-				.Replace(MessagePlaceholders.ActualValue, actual.ToString(), StringComparison.OrdinalIgnoreCase)
+				.Replace(MessagePlaceholders.ActualValue, actual.ToString(format, null), StringComparison.OrdinalIgnoreCase)
 				?? string.Empty;
 		}
 		
 		var expected = rule.IsRelative ? rule.Value : rule.RawValue ?? rule.Value;
 		return rule.ErrorMessage?
 			.Replace(MessagePlaceholders.Value, expected, StringComparison.OrdinalIgnoreCase)
-			.Replace(MessagePlaceholders.ActualValue, actual.ToString(), StringComparison.OrdinalIgnoreCase)
+			.Replace(MessagePlaceholders.ActualValue, actual.ToString(format, null), StringComparison.OrdinalIgnoreCase)
 			?? string.Empty;
 	}
 }

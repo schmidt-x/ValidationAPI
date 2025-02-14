@@ -93,9 +93,7 @@ public partial class PropertyValidator
 		}
 		else if (rule.Value.StartsWith('n'))
 		{
-			expected = offset.HasValue
-				? DateOnly.FromDateTime(now.Add(offset.Value).DateTime)
-				: DateOnly.FromDateTime(now.DateTime);
+			expected = DateOnly.FromDateTime((offset.HasValue ? now.Add(offset.Value) : now).DateTime);
 		}
 		else
 			expected = DateOnly.Parse(rule.Value);

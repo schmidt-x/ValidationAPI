@@ -37,7 +37,7 @@ public static partial class PropertyValidator
 				PropertyType.String   => ValidateString,
 				PropertyType.DateTime => ValidateDateTime,
 				PropertyType.DateOnly => ValidateDateOnly,
-				PropertyType.TimeOnly => throw new NotImplementedException(),
+				PropertyType.TimeOnly => ValidateTimeOnly,
 				_ => throw new ArgumentOutOfRangeException(nameof(rules))
 			};
 			
