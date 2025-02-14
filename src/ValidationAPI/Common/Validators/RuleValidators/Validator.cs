@@ -35,7 +35,7 @@ public partial class RuleValidator
 			PropertyType.Float    => throw new NotImplementedException(),
 			PropertyType.DateTime => ValidateDateTime,
 			PropertyType.DateOnly => ValidateDateOnly,
-			PropertyType.TimeOnly => throw new NotImplementedException(),
+			PropertyType.TimeOnly => ValidateTimeOnly,
 			_ => throw new ArgumentOutOfRangeException(nameof(property))
 		};
 		

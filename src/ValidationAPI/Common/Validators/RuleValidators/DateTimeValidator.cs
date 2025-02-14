@@ -37,12 +37,12 @@ public partial class RuleValidator
 				case RuleType.MoreOrEqual:
 				case RuleType.Equal:
 				case RuleType.NotEqual:
-					validatedRule = DateTimeValidateComparison<DateTime>(failureKey, propertyName, rule, PropertyType.DateTime);
+					validatedRule = DateTimeValidateComparison<DateTimeOffset>(failureKey, propertyName, rule, PropertyType.DateTime);
 					break;
 				
 				case RuleType.Between:
 				case RuleType.Outside:
-					validatedRule = DateTimeValidateRange(failureKey, rule, n => n);
+					validatedRule = DateTimeValidateRange(failureKey, rule, n => n.DateTime);
 					break;
 				
 				case RuleType.Regex:

@@ -10,6 +10,7 @@ public class DateTimeRuleTests
 	[Theory]
 	[InlineData("2025-01-01T12:00:00Z", PropertyType.DateTime)]
 	[InlineData("2025-01-01", PropertyType.DateOnly)]
+	[InlineData("12:00:00", PropertyType.TimeOnly)]
 	public void ShouldSucceed_DateTime(string date, PropertyType type)
 	{
 		// Arrange
@@ -51,6 +52,9 @@ public class DateTimeRuleTests
 	[InlineData("NOW", "+1", PropertyType.DateOnly)]
 	[InlineData("now", "-1", PropertyType.DateOnly)]
 	[InlineData("NOw", null, PropertyType.DateOnly)]
+	[InlineData("NOW", "+00:05", PropertyType.TimeOnly)]
+	[InlineData("now", "-00:05", PropertyType.TimeOnly)]
+	[InlineData("NOw", null, PropertyType.TimeOnly)]
 	public void ShouldSucceed_NowWithOffset(string now, string? offset, PropertyType type)
 	{
 		// Arrange
@@ -92,7 +96,10 @@ public class DateTimeRuleTests
 	[InlineData(null, PropertyType.DateTime)]  // no offset
 	[InlineData("+1", PropertyType.DateOnly)]
 	[InlineData("-1", PropertyType.DateOnly)]
-	[InlineData(null, PropertyType.DateOnly)]  // no offset
+	[InlineData(null, PropertyType.DateOnly)]
+	[InlineData("+00:05", PropertyType.TimeOnly)]
+	[InlineData("-00:05", PropertyType.TimeOnly)]
+	[InlineData(null, PropertyType.TimeOnly)]
 	public void ShouldSucceed_RelativeWithOffset(string? offset, PropertyType type)
 	{
 		// Arrange
@@ -134,18 +141,7 @@ public class DateTimeRuleTests
 	}
 	
 	[Theory]
-	[InlineData("now-00:05", "now+00:05", PropertyType.DateTime)]
-	[InlineData("now", "now+00:05", PropertyType.DateTime)]
-	[InlineData("now-00:05", "now", PropertyType.DateTime)]
-	[InlineData("2025-01-01T12:00:00Z", "now", PropertyType.DateTime)]
-	[InlineData("2025-01-01T12:00:00Z", "now+00:05", PropertyType.DateTime)]
-	[InlineData("2025-01-01T12:00:00Z", "2025-01-01T12:00:01Z", PropertyType.DateTime)]
-	[InlineData("now-1", "now+1", PropertyType.DateOnly)]
-	[InlineData("now", "now+1", PropertyType.DateOnly)]
-	[InlineData("now-1", "now", PropertyType.DateOnly)]
-	[InlineData("2025-01-01", "now", PropertyType.DateOnly)]
-	[InlineData("2025-01-01", "now+1", PropertyType.DateOnly)]
-	[InlineData("2025-01-01", "2025-01-02", PropertyType.DateOnly)]
+	[MemberData(nameof(RangeData))]
 	public void ShouldSucceed_Range(string lower, string upper, PropertyType type)
 	{
 		// Arrange
@@ -186,6 +182,8 @@ public class DateTimeRuleTests
 	[InlineData("{Username00:05}", PropertyType.DateTime)]
 	[InlineData("now1", PropertyType.DateOnly)]
 	[InlineData("{Username1.00:00}", PropertyType.DateOnly)]
+	[InlineData("now00:05", PropertyType.TimeOnly)]
+	[InlineData("{Username00:05}", PropertyType.TimeOnly)]
 	public void ShouldFailIfSignIsNotPresent(string input, PropertyType type)
 	{
 		// Arrange
@@ -215,6 +213,9 @@ public class DateTimeRuleTests
 	[InlineData("now-23:59", "now", PropertyType.DateOnly)]
 	[InlineData("2025-01-01", "2025-01-01", PropertyType.DateOnly)]
 	[InlineData("now", "2026-01-01", PropertyType.DateOnly)]
+	[InlineData("now+00:01", "now", PropertyType.TimeOnly)]
+	[InlineData("12:00:00", "12:00:00", PropertyType.TimeOnly)]
+	[InlineData("now", "12:00:01", PropertyType.TimeOnly)]
 	public void ShouldFailIfLowerBoundExceedsUpperBound(string lower, string upper, PropertyType type)
 	{
 		// Arrange
@@ -239,6 +240,7 @@ public class DateTimeRuleTests
 	[Theory]
 	[InlineData("NOw-00:05", "nOW+00:05", PropertyType.DateTime)]
 	[InlineData("nOw-1", "NoW", PropertyType.DateOnly)]
+	[InlineData("nOw-00:05", "NoW", PropertyType.TimeOnly)]
 	public void ShouldLowerNowOptionForRange(string lower, string upper, PropertyType type)
 	{
 		// Arrange
@@ -267,4 +269,28 @@ public class DateTimeRuleTests
 		Assert.Equal(expectedValue, validatedRule.Value);
 		Assert.Equal(expectedExtraInfo, validatedRule.ExtraInfo);
 	}
+	
+	
+	public static TheoryData<string, string, PropertyType> RangeData =>
+		new()
+		{
+			{ "now-00:05", "now+00:05", PropertyType.DateTime },
+			{ "now", "now+00:05", PropertyType.DateTime },
+			{ "now-00:05", "now", PropertyType.DateTime },
+			{ "2025-01-01T12:00:00Z", "now", PropertyType.DateTime },
+			{ "2025-01-01T12:00:00Z", "now+00:05", PropertyType.DateTime },
+			{ "2025-01-01T12:00:00Z", "2025-01-01T12:00:01Z", PropertyType.DateTime },
+			{ "now-1", "now+1", PropertyType.DateOnly },
+			{ "now", "now+1", PropertyType.DateOnly },
+			{ "now-1", "now", PropertyType.DateOnly },
+			{ "2025-01-01", "now", PropertyType.DateOnly },
+			{ "2025-01-01", "now+1", PropertyType.DateOnly },
+			{ "2025-01-01", "2025-01-02", PropertyType.DateOnly },
+			{ "now-00:05", "now+00:05", PropertyType.TimeOnly },
+			{ "now", "now+00:05", PropertyType.TimeOnly },
+			{ "now-00:05", "now", PropertyType.TimeOnly },
+			{ "12:00:00", "now", PropertyType.TimeOnly },
+			{ "12:00:00", "now+00:05", PropertyType.TimeOnly },
+			{ "12:00:00", "12:00:01", PropertyType.TimeOnly },
+		};
 }
