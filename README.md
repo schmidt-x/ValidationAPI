@@ -496,7 +496,7 @@ Example:
   "Name": "START_TIME_DATE_ONLY",
   "Type": "Between",
   "Value": [ "now-1", "now+1" ],
-  "ErrorMessage": "Start time must fall within the range of yesterday to tomorrow."
+  "ErrorMessage": "Start time must be within 24 hours before or after the current time."
 },
 {
   "Name": "END_TIME_DATE_ONLY",

@@ -8,6 +8,9 @@ public static class ErrorCodes
 	public const string VALIDATION_FAILURE        = nameof(VALIDATION_FAILURE);
 	public const string AUTH_FAILURE              = nameof(AUTH_FAILURE);
 	public const string INVALID_OPERATION_FAILURE = nameof(INVALID_OPERATION_FAILURE);
+	public const string NOT_IMPLEMENTED_FAILURE   = nameof(NOT_IMPLEMENTED_FAILURE);
+	public const string INTERNAL_SERVER_FAILURE   = nameof(INTERNAL_SERVER_FAILURE);
+	
 	
 	// Auth
 	public const string EMPTY_VALUE             = nameof(EMPTY_VALUE);
@@ -30,7 +33,7 @@ public static class ErrorCodes
 	public const string DUPLICATE_RULE_NAME = nameof(DUPLICATE_RULE_NAME);
 	
 	// Properties
-	public const string EMPTY_PROPERTIES          = nameof(EMPTY_PROPERTIES);
+	public const string EMPTY_PROPERTIES        = nameof(EMPTY_PROPERTIES);
 	public const string PROPERTY_NOT_PRESENT    = nameof(PROPERTY_NOT_PRESENT);
 	public const string INVALID_PROPERTY_TYPE   = nameof(INVALID_PROPERTY_TYPE);
 	public const string EMPTY_PROPERTY_NAME     = nameof(EMPTY_PROPERTY_NAME);

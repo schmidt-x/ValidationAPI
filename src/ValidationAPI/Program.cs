@@ -39,6 +39,8 @@ public class Program
 			
 			builder.Services.AddHttpContextAccessor();
 			
+			builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+			
 			const string documentName = "v1";
 			builder.Services.AddOpenApi(documentName);
 			
@@ -57,6 +59,8 @@ public class Program
 			app.RunMigrations();
 			
 			app.UseSerilogRequestLogging();
+			
+			app.UseExceptionHandler(_ => {});
 			
 			app.UseHttpsRedirection();
 			

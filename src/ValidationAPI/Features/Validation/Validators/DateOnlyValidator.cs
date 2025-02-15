@@ -33,8 +33,8 @@ public partial class PropertyValidator
 				RuleType.NotEqual    => DateOnlyNotEqual,
 				RuleType.Between     => DateOnlyBetween,
 				RuleType.Outside     => DateOnlyOutside,
-				RuleType.Regex       => throw new NotImplementedException("unreachable"),
-				RuleType.Email       => throw new NotImplementedException("unreachable"),
+				RuleType.Regex       => throw new Exception("unreachable code"),
+				RuleType.Email       => throw new Exception("unreachable code"),
 				_ => throw new ArgumentOutOfRangeException(nameof(rules))
 			};
 			
