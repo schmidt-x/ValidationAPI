@@ -41,8 +41,8 @@ public class Program
 			
 			builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 			
-			const string documentName = "v1";
-			builder.Services.AddOpenApi(documentName);
+			builder.Services.AddEndpointsApiExplorer();
+			builder.Services.AddSwaggerGen();
 			
 			builder.Services.AddConnectionStrings();
 			builder.Services.AddAuthOptions();
@@ -62,13 +62,13 @@ public class Program
 			
 			app.UseExceptionHandler(_ => {});
 			
-			app.UseHttpsRedirection();
-			
-			if (app.Environment.IsDevelopment())
+			if (!app.Environment.IsDevelopment())
 			{
-				app.MapOpenApi();
-				app.UseSwaggerUI(o => o.SwaggerEndpoint($"/openapi/{documentName}.json", "ValidationAPI"));
+				app.UseHttpsRedirection();
 			}
+			
+			app.UseSwagger();
+			app.UseSwaggerUI();
 			
 			app.UseAuthentication();
 			app.UseAuthorization();
