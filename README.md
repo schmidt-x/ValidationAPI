@@ -3,6 +3,7 @@
 This API provides a flexible and dynamic approach to user-input validation by allowing developers to define custom validation rules, request body structures, and endpoints on the fly. Instead of modifying validation code whenever business rules change, developers can update validation configurations dynamically, ensuring adaptability and reducing maintenance overhead. This approach centralizes validation logic and promotes consistency across services.
 
 # Table of Contents
+- [Running Locally](#running-locally)
 - [Usage](#usage)
   - [Defining Endpoint](#defining-endpoint)
   - [Validating Request](#validating-request)
@@ -25,19 +26,29 @@ This API provides a flexible and dynamic approach to user-input validation by al
       - [Offset](#offset)
   - [IsOptional](#isoptional)
 
+## Running Locally
+
+To run the app locally with Docker:
+
+1. Create `.env` file based on `.env.example` and replace the placeholder values with the desired ones.
+2. Run:
+	```bash
+	docker compose up
+	```
+3. Navigate to http://localhost:7001/swagger (*default port from `.env.example` under the `API_PORT` variable*).
 
 ## Usage
 
 ### Defining Endpoint
 
-The following request defines an endpoint `/my-endpoint` with the following properties and rules:
+The following request defines **an endpoint** `/my-endpoint` with the following **properties** and **rules**:
 - EmailAddress (String)
   - Must be a valid email address
 - Username (String)
   - Length must be between 3 and 32 (inclusive)
   - Can only contain lower (a-z), upper (A-Z), underscores (_), or periods
 - DateOfBirth (DateOnly)
-  - User must be at least 18 years old (6,574 days approximately)
+  - Must be at least 18 years earlier than the current date (approximately 6,574 days)
 - Password (String)
   - *(rules omitted for brevity)*
 - ConfirmPassword (String)
@@ -496,7 +507,7 @@ Example:
   "Name": "START_TIME_DATE_ONLY",
   "Type": "Between",
   "Value": [ "now-1", "now+1" ],
-  "ErrorMessage": "Start time must be within 24 hours before or after the current time."
+  "ErrorMessage": "Start time must fall within the range of yesterday to tomorrow."
 },
 {
   "Name": "END_TIME_DATE_ONLY",

@@ -1,0 +1,41 @@
+name: validation-api
+
+# TODO: add nginx service (https://docs.docker.com/reference/compose-file/services/#advanced-example)
+# TODO: use secrets
+
+services:
+  api:
+    container_name: api
+    image: api:1.0.0
+    restart: unless-stopped
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - ${API_PORT}:8080
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - net
+    
+  db:
+    container_name: db
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - ${DB_PORT}:5432
+    env_file:
+      - .env
+    volumes:
+      - vol:/var/lib/postgresql/data
+    networks:
+      - net
+
+volumes:
+  vol:
+    name: v-api_data
+
+networks: 
+  net: 
+    name: v-api_net
