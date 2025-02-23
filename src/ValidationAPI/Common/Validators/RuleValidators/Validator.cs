@@ -31,8 +31,8 @@ public partial class RuleValidator
 		RuleValidatorDelegate ruleValidator = property.Type switch
 		{
 			PropertyType.String   => ValidateString,
-			PropertyType.Int      => throw new NotImplementedException(),
-			PropertyType.Float    => throw new NotImplementedException(),
+			PropertyType.Int      => ValidateInt,
+			PropertyType.Float    => ValidateFloat,
 			PropertyType.DateTime => ValidateDateTime,
 			PropertyType.DateOnly => ValidateDateOnly,
 			PropertyType.TimeOnly => ValidateTimeOnly,

@@ -128,7 +128,7 @@ public partial class RuleValidator
 					{
 						Failures.AddErrorDetail(
 							failureKey, INVALID_RULE_VALUE,
-							$"[{rule.Name}] Missing closing bracket '}}'. Consider prepending '\\' for the exact comparison.");
+							$"[{rule.Name}] Value missing closing brace '}}'. Consider prepending '\\' for the exact comparison.");
 						return null;
 					}
 					if (ruleRawValue.Length < 3)

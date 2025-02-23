@@ -289,8 +289,8 @@ public class DateTimeRuleTests
 			{ "now-00:05", "now+00:05", PropertyType.TimeOnly },
 			{ "now", "now+00:05", PropertyType.TimeOnly },
 			{ "now-00:05", "now", PropertyType.TimeOnly },
-			{ "12:00:00", "now", PropertyType.TimeOnly },
-			{ "12:00:00", "now+00:05", PropertyType.TimeOnly },
+			{ "00:00:01", "now", PropertyType.TimeOnly },
+			{ "00:00:01", "now+00:05", PropertyType.TimeOnly },
 			{ "12:00:00", "12:00:01", PropertyType.TimeOnly },
 		};
 }

@@ -96,7 +96,7 @@ public partial class RuleValidator
 		var rawValue = value.GetString();
 		if (string.IsNullOrWhiteSpace(rawValue))
 		{
-			Failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Empty value.");
+			Failures.AddErrorDetail(failureKey, EMPTY_RULE_VALUE, $"[{rule.Name}] Value is required.");
 			return null;
 		}
 		
@@ -104,7 +104,7 @@ public partial class RuleValidator
 		{
 			if (!rawValue.EndsWith('}'))
 			{
-				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Invalid ${typeName}.");
+				Failures.AddErrorDetail(failureKey, INVALID_RULE_VALUE, $"[{rule.Name}] Value missing closing brace '}}'.");
 				return null;
 			}
 			if (rawValue.Length < 3)
