@@ -2,6 +2,8 @@
 
 This API provides a flexible and dynamic approach to user-input validation by allowing developers to define custom validation rules, request body structures, and endpoints on the fly. Instead of modifying validation code whenever business rules change, developers can update validation configurations dynamically, ensuring adaptability and reducing maintenance overhead. This approach centralizes validation logic and promotes consistency across services.
 
+Try it here: http://v-api.schtefan.xyz/swagger.
+
 # Table of Contents
 - [Running Locally](#running-locally)
 - [Usage](#usage)

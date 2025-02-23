@@ -32,8 +32,8 @@ public static partial class PropertyValidator
 			
 			Validator validator = property.Type switch
 			{
-				PropertyType.Int      => throw new NotImplementedException(),
-				PropertyType.Float    => throw new NotImplementedException(),
+				PropertyType.Int      => ValidateInt,
+				PropertyType.Float    => ValidateFloat,
 				PropertyType.String   => ValidateString,
 				PropertyType.DateTime => ValidateDateTime,
 				PropertyType.DateOnly => ValidateDateOnly,
